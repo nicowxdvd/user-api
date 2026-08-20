@@ -19,7 +19,7 @@ export class CreateUserDto {
   @IsString({ message: 'El apellido debe ser un texto' })
   @IsNotEmpty({ message: 'El apellido es obligatorio' })
   @MinLength(3, { message: 'El apeliido debe tener al menos 3 caracteres' })
-  @MaxLength(50, { message: 'El apeliido no debe superar los 50 caracteres' })
+  @MaxLength(50, { message: 'El apellido no debe superar los 50 caracteres' })
   lastName: string = '';
 
   @IsEmail()

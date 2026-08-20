@@ -11,7 +11,25 @@ export class UserRepository {
   ) {}
 
   async findAll(): Promise<User[]> {
-    return await this.typeormRepo.find({});
+    return await this.typeormRepo.find({
+      relations: {
+        role: true,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        isActive: true,
+        roleId: true,
+        createdAt: true,
+        updatedAt: true,
+        role: {
+          id: true,
+          name: true, // Omite 'description'
+        },
+      },
+    });
   }
 
   async findById(id: string): Promise<User | null> {

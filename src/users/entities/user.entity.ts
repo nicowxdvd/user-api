@@ -4,8 +4,11 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { Role } from '../../roles/entities/role.entity';
 
 @Entity('users')
 export class User {
@@ -36,4 +39,8 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date | undefined;
+
+  @ManyToOne(() => Role, (role) => role.users)
+  @JoinColumn({ name: 'role_id' })
+  role: Role | undefined;
 }
