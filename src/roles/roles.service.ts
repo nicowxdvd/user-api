@@ -15,7 +15,11 @@ export class RolesService {
 
   async create(createRoleDto: CreateRoleDto): Promise<Role> {
     try {
-      return await this.roleRepository.save(createRoleDto);
+      const name = createRoleDto.name.trim().toUpperCase();
+      return await this.roleRepository.save({
+        name,
+        description: createRoleDto.description,
+      });
     } catch (error: any) {
       if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
         throw new ConflictException(
@@ -30,7 +34,7 @@ export class RolesService {
     return this.roleRepository.findAll();
   }
 
-  async remove(id: number): Promise<{ message: string }>{
+  async remove(id: number): Promise<{ message: string }> {
     try {
       const result = await this.roleRepository.delete(id);
       if (!result || result.affected === 0) {
