@@ -2,12 +2,12 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserRepository } from './repositories/user.repository';
 import * as bcrypt from 'bcrypt';
+import type { IUserRepository } from './interface/user-repository.interface';
 
 @Injectable()
 export class UsersService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: IUserRepository) {}
 
   async create(createUserDto: CreateUserDto) {
     const { email, password, firstName, lastName, roleId } = createUserDto;
