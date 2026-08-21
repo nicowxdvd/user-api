@@ -34,8 +34,8 @@ export class RolesService {
     }
   }
 
-  findAll(): Promise<Role[]> {
-    return this.roleRepository.findAll();
+  findAll(isActive?: boolean): Promise<Role[]> {
+    return this.roleRepository.findAll(isActive);
   }
 
   async remove(id: number): Promise<{ message: string }> {
@@ -57,5 +57,22 @@ export class RolesService {
 
       throw new InternalServerErrorException('Error al eliminar el rol');
     }
+  }
+
+  async toggleStatus(
+    id: number,
+  ): Promise<{ message: string; isActive: boolean }> {
+    const role = await this.roleRepository.findById(id);
+    if (!role) {
+      throw new NotFoundException(`El rol con ID ${id} no existe`);
+    }
+
+    const newStatus = !role.isActive;
+    await this.roleRepository.updateStatus(id, newStatus);
+
+    return {
+      message: `El rol ahora está ${newStatus ? 'activo' : 'inactivo'}`,
+      isActive: newStatus,
+    };
   }
 }
