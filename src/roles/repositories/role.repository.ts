@@ -12,6 +12,17 @@ export class RoleRepository implements IRoleRepository {
     private readonly typeormRepo: Repository<Role>,
   ) {}
 
+  async findById(id: number): Promise<Role | null> {
+    return await this.typeormRepo.findOneBy({ id });
+  }
+
+  async updateStatus(
+    id: number,
+    isActive: boolean,
+  ): Promise<{ affected?: number | null }> {
+    return await this.typeormRepo.update(id, { isActive });
+  }
+
   async findAll(): Promise<Role[]> {
     return await this.typeormRepo.find({});
   }

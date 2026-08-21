@@ -13,6 +13,9 @@ export class Role {
   @Column({ nullable: true })
   description?: string;
 
+  @Column({ type: 'boolean', default: true, name: 'is_active' })
+  isActive!: boolean;
+
   @OneToMany(() => User, (user) => user.role)
   users!: User[];
 }
