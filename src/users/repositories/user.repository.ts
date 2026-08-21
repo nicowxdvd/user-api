@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import { IUserRepository } from '../interface/user-repository.interface';
 
 @Injectable()
-export class UserRepository {
+export class UserRepository implements IUserRepository {
   constructor(
     @InjectRepository(User)
     private readonly typeormRepo: Repository<User>,
@@ -26,7 +27,7 @@ export class UserRepository {
         updatedAt: true,
         role: {
           id: true,
-          name: true, // Omite 'description'
+          name: true,
         },
       },
     });
