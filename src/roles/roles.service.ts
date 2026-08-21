@@ -1,17 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   ConflictException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
-import { RoleRepository } from './repositories/role.repository';
 import { Role } from './entities/role.entity';
-
+import { ROLE_REPOSITORY_TOKEN } from './interfaces/role-repository.interface';
+import type { IRoleRepository } from './interfaces/role-repository.interface';
 @Injectable()
 export class RolesService {
-  constructor(private readonly roleRepository: RoleRepository) {}
+  constructor(
+    @Inject(ROLE_REPOSITORY_TOKEN)
+    private readonly roleRepository: IRoleRepository,
+  ) {}
 
   async create(createRoleDto: CreateRoleDto): Promise<Role> {
     try {
