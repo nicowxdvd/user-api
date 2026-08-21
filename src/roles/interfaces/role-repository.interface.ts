@@ -6,7 +6,7 @@ export const ROLE_REPOSITORY_TOKEN = Symbol('ROLE_REPOSITORY_TOKEN');
 
 export interface IRoleRepository {
   save(createRoleDto: CreateRoleDto): Promise<Role>;
-  findAll(): Promise<Role[]>;
+  findAll(isActive?: boolean): Promise<Role[]>;
   findById(id: number): Promise<Role | null>;
   updateStatus(
     id: number,
