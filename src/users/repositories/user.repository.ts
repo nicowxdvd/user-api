@@ -11,11 +11,12 @@ export class UserRepository implements IUserRepository {
     private readonly typeormRepo: Repository<User>,
   ) {}
 
-  async findAll(): Promise<User[]> {
+  async findAll(roleActive?: boolean): Promise<User[]> {
     return await this.typeormRepo.find({
       relations: {
         role: true,
       },
+      where: roleActive !== undefined ? { role: { isActive: roleActive } } : {},
       select: {
         id: true,
         firstName: true,

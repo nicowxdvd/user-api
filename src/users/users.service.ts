@@ -1,13 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
-import type { IUserRepository } from './interface/user-repository.interface';
+import {
+  USER_REPOSITORY_TOKEN,
+  type IUserRepository,
+} from './interface/user-repository.interface';
 
 @Injectable()
 export class UsersService {
-  constructor(private userRepository: IUserRepository) {}
+  constructor(
+    @Inject(USER_REPOSITORY_TOKEN)
+    private userRepository: IUserRepository,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     const { email, password, firstName, lastName, roleId } = createUserDto;
@@ -39,8 +45,8 @@ export class UsersService {
     }
   }
 
-  findAll() {
-    return this.userRepository.findAll();
+  findAll(roleActive?: boolean) {
+    return this.userRepository.findAll(roleActive);
   }
 
   findOne(id: string) {

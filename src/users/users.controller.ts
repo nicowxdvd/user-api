@@ -11,6 +11,8 @@ import {
   ClassSerializerInterceptor,
   UseInterceptors,
   Put,
+  ParseBoolPipe,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -33,8 +35,11 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(
+    @Query('roleActive', new ParseBoolPipe({ optional: true }))
+    roleActive?: boolean,
+  ) {
+    return this.usersService.findAll(roleActive);
   }
 
   @Get(':id')
