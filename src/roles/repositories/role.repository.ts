@@ -2,9 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 import { Role } from '../entities/role.entity';
+import { CreateRoleDto } from '../dto/create-role.dto';
+import { IRoleRepository } from '../interfaces/role-repository.interface';
 
 @Injectable()
-export class RoleRepository {
+export class RoleRepository implements IRoleRepository {
   constructor(
     @InjectRepository(Role)
     private readonly typeormRepo: Repository<Role>,
@@ -14,8 +16,8 @@ export class RoleRepository {
     return await this.typeormRepo.find({});
   }
 
-  async save(role: Partial<Role>): Promise<Role> {
-    return await this.typeormRepo.save(role);
+  async save(createRoleDto: CreateRoleDto): Promise<Role> {
+    return await this.typeormRepo.save(createRoleDto);
   }
 
   async delete(id: number): Promise<DeleteResult> {
