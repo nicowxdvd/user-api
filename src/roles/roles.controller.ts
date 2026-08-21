@@ -8,6 +8,10 @@ import {
   UseGuards,
   ClassSerializerInterceptor,
   UseInterceptors,
+  Query,
+  ParseBoolPipe,
+  Patch,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
@@ -25,8 +29,16 @@ export class RolesController {
   }
 
   @Get()
-  findAll() {
-    return this.rolesService.findAll();
+  findAll(
+    @Query('isActive', new ParseBoolPipe({ optional: true }))
+    isActive?: boolean,
+  ) {
+    return this.rolesService.findAll(isActive);
+  }
+
+  @Patch(':id/status')
+  toggleStatus(@Param('id', ParseIntPipe) id: number) {
+    return this.rolesService.toggleStatus(id);
   }
 
   @Delete(':id')
