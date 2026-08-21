@@ -23,8 +23,9 @@ export class RoleRepository implements IRoleRepository {
     return await this.typeormRepo.update(id, { isActive });
   }
 
-  async findAll(): Promise<Role[]> {
-    return await this.typeormRepo.find({});
+  async findAll(isActive?: boolean): Promise<Role[]> {
+    const where = isActive !== undefined ? { isActive } : {};
+    return await this.typeormRepo.find({ where });
   }
 
   async save(createRoleDto: CreateRoleDto): Promise<Role> {
