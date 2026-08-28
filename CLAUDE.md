@@ -8,7 +8,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run start:dev          # watch mode (requires a reachable MySQL — app fails to boot otherwise)
 npm run build              # nest build -> dist/
 npm run lint               # eslint --fix over src, test
-npm run format             # prettier --write
 
 npm test                   # jest, rootDir=src, testRegex .*\.spec\.ts$
 npm test -- users.service  # single suite by path substring
