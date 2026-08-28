@@ -5,6 +5,7 @@ import { UserProfile } from './entities/user-profile.entity';
 import { USER_PROFILE_REPOSITORY_TOKEN } from './interfaces/user-profile-repository.interface';
 import type { IUserProfileRepository } from './interfaces/user-profile-repository.interface';
 
+
 @Injectable()
 export class UserProfilesService {
   constructor(
@@ -12,9 +13,10 @@ export class UserProfilesService {
     private readonly userProfileRepository: IUserProfileRepository,
   ) {}
 
-  async create( createUserProfileDto: CreateUserProfileDto,): Promise<UserProfile> {
-    const { userId } = createUserProfileDto;
 
+
+  async create( createUserProfileDto: CreateUserProfileDto,): Promise<UserProfile> {
+    const { userId }      = createUserProfileDto;
     const existingProfile = await this.userProfileRepository.findByUserId(userId);
     if (existingProfile) {
       throw new ConflictException('El usuario ya tiene un perfil registrado.');
@@ -58,11 +60,13 @@ export class UserProfilesService {
     return userProfile;
   }
 
+
+
   async update(id: number, updateUserProfileDto: UpdateUserProfileDto,): Promise<UserProfile> {
     await this.findOne(id);
     try {
       const datosActualizados = {...updateUserProfileDto,countryCode: this.normalizeCountryCode(updateUserProfileDto.countryCode),};
-      const updated = await this.userProfileRepository.update( id,datosActualizados);
+      const updated           = await this.userProfileRepository.update( id,datosActualizados);
       if (!updated) {
         throw new NotFoundException(`El perfil con ID ${id} no existe`);
       }
@@ -72,13 +76,14 @@ export class UserProfilesService {
         throw error;
       }
       if (error?.code === 'ER_DUP_ENTRY' || error?.errno === 1062) {
-        throw new ConflictException(
-          'Los datos enviados ya están en uso por otro perfil',
-        );
+        throw new ConflictException('Los datos enviados ya están en uso por otro perfil',);
       }
       throw new InternalServerErrorException('Error al actualizar el perfil');
     }
   }
+
+
+
 
   async remove(id: number): Promise<{ message: string }> {
     try {
@@ -92,19 +97,17 @@ export class UserProfilesService {
         throw error;
       }
       if (error?.errno === 1451 || error?.code === 'ER_ROW_IS_REFERENCED_2') {
-        throw new ConflictException(
-          'No se puede eliminar el perfil porque tiene registros asociados',
-        );
+        throw new ConflictException('No se puede eliminar el perfil porque tiene registros asociados',);
       }
       throw new InternalServerErrorException('Error al eliminar el perfil');
     }
   }
 
+
+
   // country_code es CHAR(2): se normaliza a mayúsculas antes de persistir y de
   // filtrar, igual que RolesService normaliza el nombre del rol.
-  private normalizeCountryCode(
-    countryCode?: string | null,
-  ): string | null | undefined {
+  private normalizeCountryCode(countryCode?: string | null,): string | null | undefined {
     if (countryCode === undefined || countryCode === null) {
       return countryCode;
     }
