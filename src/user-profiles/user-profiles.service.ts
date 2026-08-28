@@ -61,22 +61,22 @@ export class UserProfilesService {
   }
 
 
-
-  async update(id: number, updateUserProfileDto: UpdateUserProfileDto,): Promise<UserProfile> {
-    await this.findOne(id);
+  async update(id: number, updateUserProfileDto: UpdateUserProfileDto): Promise<UserProfile> {
     try {
-      const datosActualizados = {...updateUserProfileDto,countryCode: this.normalizeCountryCode(updateUserProfileDto.countryCode),};
-      const updated           = await this.userProfileRepository.update( id,datosActualizados);
+      const datosActualizados = {...updateUserProfileDto, countryCode: this.normalizeCountryCode(updateUserProfileDto.countryCode),};
+      const updated = await this.userProfileRepository.update(id, datosActualizados);
+      
       if (!updated) {
         throw new NotFoundException(`El perfil con ID ${id} no existe`);
       }
+
       return updated;
     } catch (error: any) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       if (error?.code === 'ER_DUP_ENTRY' || error?.errno === 1062) {
-        throw new ConflictException('Los datos enviados ya están en uso por otro perfil',);
+        throw new ConflictException('Los datos enviados ya están en uso por otro perfil');
       }
       throw new InternalServerErrorException('Error al actualizar el perfil');
     }
