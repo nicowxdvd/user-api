@@ -53,26 +53,16 @@ export class UserProfilesService {
   async findByUserId(userId: string): Promise<UserProfile> {
     const userProfile = await this.userProfileRepository.findByUserId(userId);
     if (!userProfile) {
-      throw new NotFoundException(
-        `El usuario con ID ${userId} no tiene un perfil registrado`,
-      );
+      throw new NotFoundException( `El usuario con ID ${userId} no tiene un perfil registrado`,);
     }
     return userProfile;
   }
 
-  async update(
-    id: number,
-    updateUserProfileDto: UpdateUserProfileDto,
-  ): Promise<UserProfile> {
+  async update(id: number, updateUserProfileDto: UpdateUserProfileDto,): Promise<UserProfile> {
     await this.findOne(id);
-
     try {
-      const updated = await this.userProfileRepository.update(id, {
-        ...updateUserProfileDto,
-        countryCode: this.normalizeCountryCode(
-          updateUserProfileDto.countryCode,
-        ),
-      });
+      const datosActualizados = {...updateUserProfileDto,countryCode: this.normalizeCountryCode(updateUserProfileDto.countryCode),};
+      const updated = await this.userProfileRepository.update( id,datosActualizados);
       if (!updated) {
         throw new NotFoundException(`El perfil con ID ${id} no existe`);
       }
