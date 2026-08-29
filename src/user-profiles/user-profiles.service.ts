@@ -61,6 +61,7 @@ export class UserProfilesService {
   }
 
 
+
   async update(id: number, updateUserProfileDto: UpdateUserProfileDto): Promise<UserProfile> {
     try {
       const datosActualizados = {...updateUserProfileDto, countryCode: this.normalizeCountryCode(updateUserProfileDto.countryCode),};
@@ -84,7 +85,6 @@ export class UserProfilesService {
 
 
 
-
   async remove(id: number): Promise<{ message: string }> {
     try {
       const result = await this.userProfileRepository.delete(id);
@@ -105,8 +105,6 @@ export class UserProfilesService {
 
 
 
-  // country_code es CHAR(2): se normaliza a mayúsculas antes de persistir y de
-  // filtrar, igual que RolesService normaliza el nombre del rol.
   private normalizeCountryCode(countryCode?: string | null,): string | null | undefined {
     if (countryCode === undefined || countryCode === null) {
       return countryCode;
