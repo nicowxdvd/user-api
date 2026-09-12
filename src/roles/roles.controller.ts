@@ -8,14 +8,13 @@ import {
   UseGuards,
   ClassSerializerInterceptor,
   UseInterceptors,
-  Query,
-  ParseBoolPipe,
   Patch,
   ParseIntPipe,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { Public } from '../common/decorators/public.decorator';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -28,12 +27,12 @@ export class RolesController {
     return this.rolesService.create(createRoleDto);
   }
 
+  @Public()
   @Get()
-  findAll(
-    @Query('isActive', new ParseBoolPipe({ optional: true }))
-    isActive?: boolean,
-  ) {
-    return this.rolesService.findAll(isActive);
+  findAll() {
+    // El listado es público porque se usa en el registro, por eso expone
+    // únicamente los roles activos sin importar lo que llegue por query.
+    return this.rolesService.findAll(true);
   }
 
   @Patch(':id/status')
