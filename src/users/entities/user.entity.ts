@@ -28,7 +28,10 @@ export class User {
   @Column({ type: 'varchar', name: 'last_name', nullable: true })
   lastName: string | undefined;
 
-  @Column({ type: 'varchar', name: 'is_active', default: true })
+  // 'boolean' se traduce a tinyint(1) en MySQL y es lo que hace que TypeORM
+  // convierta el 1/0 del motor a true/false al hidratar la entidad. Con
+  // 'varchar' no había conversión y la propiedad recibía el string '1'.
+  @Column({ type: 'boolean', name: 'is_active', default: true })
   isActive: boolean | undefined;
 
   @Column({ type: 'int', name: 'role_id' })
