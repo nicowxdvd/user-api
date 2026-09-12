@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -7,16 +12,30 @@ import {
   USER_REPOSITORY_TOKEN,
   type IUserRepository,
 } from './interface/user-repository.interface';
+import {
+  ROLE_REPOSITORY_TOKEN,
+  type IRoleRepository,
+} from '../roles/interfaces/role-repository.interface';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(USER_REPOSITORY_TOKEN)
     private userRepository: IUserRepository,
+    @Inject(ROLE_REPOSITORY_TOKEN)
+    private readonly roleRepository: IRoleRepository,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
     const { email, password, firstName, lastName, roleId } = createUserDto;
+
+    const role = await this.roleRepository.findById(roleId);
+    if (!role) {
+      throw new BadRequestException(`El rol con ID ${roleId} no existe`);
+    }
+    if (!role.isActive) {
+      throw new BadRequestException(`El rol '${role.name}' no está activo`);
+    }
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
