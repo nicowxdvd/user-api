@@ -1,10 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {
-  BadRequestException,
-  ConflictException,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -12,30 +7,17 @@ import {
   USER_REPOSITORY_TOKEN,
   type IUserRepository,
 } from './interface/user-repository.interface';
-import {
-  ROLE_REPOSITORY_TOKEN,
-  type IRoleRepository,
-} from '../roles/interfaces/role-repository.interface';
+const ROL_POR_DEFECTO_ID = 11;
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(USER_REPOSITORY_TOKEN)
     private userRepository: IUserRepository,
-    @Inject(ROLE_REPOSITORY_TOKEN)
-    private readonly roleRepository: IRoleRepository,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const { email, password, firstName, lastName, roleId } = createUserDto;
-
-    const role = await this.roleRepository.findById(roleId);
-    if (!role) {
-      throw new BadRequestException(`El rol con ID ${roleId} no existe`);
-    }
-    if (!role.isActive) {
-      throw new BadRequestException(`El rol '${role.name}' no está activo`);
-    }
+    const { email, password, firstName, lastName } = createUserDto;
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
@@ -50,7 +32,7 @@ export class UsersService {
         password: hashedPassword,
         firstName,
         lastName,
-        roleId,
+        roleId: ROL_POR_DEFECTO_ID,
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...userWithoutPassword } = user;
