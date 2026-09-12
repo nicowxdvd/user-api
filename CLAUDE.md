@@ -56,7 +56,7 @@ La forma de las consultas (`relations`, `select`, `where`) vive en el repositori
 
 `synchronize: true`: el esquema de MySQL se deriva de las entidades al arrancar y no hay migraciones. Modificar una entidad altera directamente la base de datos de desarrollo.
 
-Las propiedades de las entidades están en camelCase y las columnas en snake_case mediante `name:` explícito (`firstName` → `first_name`). `User.roleId` es una FK `int` —del mismo tipo que `roles.id`, como exige MySQL— con un `@ManyToOne` a `Role` unido por `role_id`. `User.isActive` y `Role.isActive` se declaran ambos `{ type: 'boolean' }`, que en MySQL produce `tinyint`; declararlos así es lo que hace que TypeORM hidrate un booleano real y no el `'1'` en texto. Ambas columnas tuvieron tipos equivocados y se corrigieron; el detalle está en `HOJA-DE-RUTA-USERS.md`.
+Las propiedades de las entidades están en camelCase y las columnas en snake_case mediante `name:` explícito (`firstName` → `first_name`). `User.roleId` es una FK `int` —del mismo tipo que `roles.id`, como exige MySQL— con un `@ManyToOne` a `Role` unido por `role_id`. `User.isActive` y `Role.isActive` se declaran ambos `{ type: 'boolean' }`, que en MySQL produce `tinyint`; declararlos así es lo que hace que TypeORM hidrate un booleano real y no el `'1'` en texto. Ambas columnas tuvieron tipos equivocados y se corrigieron en `4a0516d` y `b710f97`; el trabajo que queda sobre el esquema está en `PENDIENTES.md`.
 
 Los errores del driver de MySQL se traducen a excepciones HTTP dentro de los servicios inspeccionando `error.code` / `error.errno`: `ER_DUP_ENTRY`/1062 → `ConflictException`, `ER_ROW_IS_REFERENCED_2`/1451 → `ConflictException`. Sigue ese patrón en lugar de dejar escapar los errores del driver.
 
