@@ -10,13 +10,13 @@ export class AuthService {
 
   login(loginUserDto: LoginUserDto): LoginResponse {
     if (
-      loginUserDto.username !== 'nico' ||
+      loginUserDto.email !== 'nicowxdvd@gmail.com' ||
       loginUserDto.password !== '_nico_123'
     ) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const payload = { sub: 1, username: loginUserDto.username };
+    const payload = { sub: 1, username: loginUserDto.email };
 
     return { access_token: this.jwtService.sign<JwtPayload>(payload) };
   }

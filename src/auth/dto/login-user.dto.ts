@@ -1,11 +1,12 @@
-import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, MaxLength, IsEmail } from 'class-validator';
 
 export class LoginUserDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(50)
-  username: string = '';
+  @IsEmail({}, { message: 'El correo electrónico no es válido' })
+  email = '';
 
   @IsString()
   @IsNotEmpty()
