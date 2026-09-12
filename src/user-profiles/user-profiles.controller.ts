@@ -17,7 +17,6 @@ import { UserProfilesService } from './user-profiles.service';
 import { CreateUserProfileDto } from './dto/create-user-profile.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { AuthGuard } from '../auth/auth.guard';
-import { Roles } from '../common/decorators/roles.decorator';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -61,7 +60,6 @@ export class UserProfilesController {
     return this.userProfilesService.update(id, updateUserProfileDto);
   }
 
-  @Roles('ADMIN')
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.userProfilesService.remove(id);
