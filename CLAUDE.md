@@ -15,11 +15,11 @@ npm test -- -t "should be defined"   # un solo test por nombre
 npm run test:e2e           # test/jest-e2e.json (rootDir=test)
 ```
 
-`.env` está en el `.gitignore` y debe crearse localmente. Claves que lee la app: `PORT`, `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`. (`JWT_SECRET` también está en `.env` pero **no** se lee; ver Autenticación más abajo).
+`.env` está en el `.gitignore` y debe crearse localmente. Claves que lee la app: `JWT_SECRET`, `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`. Ojo: `PORT` está declarada en `.env` pero **no** se lee; `main.ts` hace `app.listen(3001)` fijo.
 
 ## Arquitectura
 
-NestJS 11 + TypeORM + MySQL. Tres módulos de funcionalidad (`users`, `roles`, `auth`) más `common/` para guards y decoradores transversales.
+NestJS 11 + TypeORM + MySQL. Cuatro módulos de funcionalidad (`users`, `roles`, `auth`, `user-profiles`) más `common/` para decoradores transversales.
 
 ### Abstracción de repositorios (la convención principal)
 
@@ -30,19 +30,19 @@ Los servicios nunca tocan TypeORM. Cada recurso define una interfaz de repositor
 - `users/users.module.ts` — `{ provide: USER_REPOSITORY_TOKEN, useClass: UserRepository }`
 - `users/users.service.ts` — `@Inject(USER_REPOSITORY_TOKEN) private userRepository: IUserRepository`
 
-Roles replica esto exactamente (`ROLE_REPOSITORY_TOKEN`; ojo, aquí el directorio es `interfaces/` frente a `interface/` en users). Al agregar un recurso, sigue esta estructura. Como la interfaz es una importación solo de tipos usada en un constructor, debe importarse con `import type` / `type IUserRepository`, o los metadatos emitidos por los decoradores rompen la inyección de dependencias.
+Roles y user-profiles replican esto exactamente (`ROLE_REPOSITORY_TOKEN`, `USER_PROFILE_REPOSITORY_TOKEN`; ojo, en ambos el directorio es `interfaces/` frente a `interface/` en users). `user-profiles` es el módulo más completo de los tres y sirve de referencia: su `IUserProfileRepository` es el único que declara un método de borrado (`delete(id): Promise<DeleteResult>`). Al agregar un recurso, sigue esta estructura. Como la interfaz es una importación solo de tipos usada en un constructor, debe importarse con `import type` / `type IUserRepository`, o los metadatos emitidos por los decoradores rompen la inyección de dependencias.
 
 La forma de las consultas (`relations`, `select`, `where`) vive en el repositorio, no en el servicio; p. ej. `UserRepository.findAll(roleActive?)` hace join con `role` y elige manualmente las columnas devueltas.
 
 ### Autenticación
 
-`AuthModule` registra `JwtModule` y **lo exporta**, de modo que `UsersModule` y `RolesModule` importan `AuthModule` únicamente para que `JwtService` sea inyectable en `AuthGuard`. `AuthGuard` parsea `Authorization: Bearer <token>`, lo verifica y adjunta el payload a `request['user']`.
+`AuthModule` registra `JwtModule` con `registerAsync`, tomando el secreto de `JWT_SECRET` vía `ConfigService` y con `expiresIn: '1h'`, y **lo exporta**. Por eso `UsersModule`, `RolesModule` y `UserProfilesModule` importan `AuthModule`: para que `JwtService` sea inyectable en `AuthGuard`.
 
-Hay dos stubs intencionalmente sin terminar, no descuidos que haya que sortear:
-- `AuthService.login` compara contra credenciales hardcodeadas (`nico` / `_nico_123`) y firma `{ sub: 1, ... }`. No consulta la tabla de usuarios ni bcrypt.
-- `RolesGuard` (`common/decorators/guards/roles.guard.ts`) siempre devuelve `true` y hace `console.log` de la request. El decorador `@Roles('ADMIN')` establece el metadato `'roles'`, pero nada lo lee, así que las restricciones por rol no se aplican actualmente.
+`AuthService.login` es real: busca al usuario por correo con `AuthRepository.findByEmailWithPassword` (que hace join con `role` y recupera el `password` pese al `select: false`), compara con `bcrypt.compare`, rechaza a los usuarios inactivos y firma un `JwtPayload` con `{ sub, email, roleId, role }`, donde `role` es el **nombre** del rol.
 
-El secreto JWT está hardcodeado en `auth.module.ts`, no se obtiene de la configuración.
+`AuthGuard` parsea `Authorization: Bearer <token>`, lo verifica y adjunta el payload a `request['user']`. Se declara a nivel de clase en los controladores, así que **protege todo el controlador salvo lo que se marque con `@Public()`** (`common/decorators/public.decorator.ts`), que el guard lee con `reflector.getAllAndOverride`. Hoy el único endpoint público es `POST /users`.
+
+**No existe autorización por rol.** Había un `RolesGuard` y un decorador `@Roles('ADMIN')` que no restringían nada —el guard devolvía `true` siempre y nadie leía su metadata—, y se eliminaron por decisión explícita en `c266db9`. La autorización disponible es binaria: hay token válido o no lo hay. No reintroduzcas `@Roles` sin acordarlo antes.
 
 ### Pipeline de request/response
 
@@ -50,18 +50,19 @@ El secreto JWT está hardcodeado en `auth.module.ts`, no se obtiene de la config
 - Los controladores aplican `ClassSerializerInterceptor`; `User.password` está doblemente protegido: `@Exclude()` para la serialización y `select: false` en la columna. `UsersService.create` además lo elimina manualmente antes de devolver.
 - `UpdateUserDto` deriva de `CreateUserDto` mediante `PartialType(OmitType(..., ['password']))`, por lo que la contraseña no se puede actualizar vía `PATCH`/`PUT /users/:id`.
 - Los filtros booleanos opcionales de query usan `new ParseBoolPipe({ optional: true })` (`GET /users?roleActive=`, `GET /roles?isActive=`).
+- `CreateUserDto` **no** declara `roleId`: el rol de creación lo fija siempre el servidor con la constante `ROL_POR_DEFECTO_ID` de `users.service.ts`. Es deliberado, porque `POST /users` es público y aceptar el rol del cliente permitía registrarse como ADMIN. Enviar `roleId` en el body devuelve 400 por `forbidNonWhitelisted`. La constante está cableada a un id concreto de la base de desarrollo, a la espera de que la columna reciba su propio `DEFAULT`.
 
 ### Persistencia
 
 `synchronize: true`: el esquema de MySQL se deriva de las entidades al arrancar y no hay migraciones. Modificar una entidad altera directamente la base de datos de desarrollo.
 
-Las propiedades de las entidades están en camelCase y las columnas en snake_case mediante `name:` explícito (`firstName` → `first_name`). `User.roleId` es una FK `tinyint` con un `@ManyToOne` a `Role` unido por `role_id`. Ojo: `User.isActive` está declarado como `{ type: 'varchar' }` pese a estar tipado como `boolean`; es una discrepancia real, así que no asumas que se lee y escribe como booleano.
+Las propiedades de las entidades están en camelCase y las columnas en snake_case mediante `name:` explícito (`firstName` → `first_name`). `User.roleId` es una FK `int` —del mismo tipo que `roles.id`, como exige MySQL— con un `@ManyToOne` a `Role` unido por `role_id`. `User.isActive` y `Role.isActive` se declaran ambos `{ type: 'boolean' }`, que en MySQL produce `tinyint`; declararlos así es lo que hace que TypeORM hidrate un booleano real y no el `'1'` en texto. Ambas columnas tuvieron tipos equivocados y se corrigieron; el detalle está en `HOJA-DE-RUTA-USERS.md`.
 
 Los errores del driver de MySQL se traducen a excepciones HTTP dentro de los servicios inspeccionando `error.code` / `error.errno`: `ER_DUP_ENTRY`/1062 → `ConflictException`, `ER_ROW_IS_REFERENCED_2`/1451 → `ConflictException`. Sigue ese patrón en lugar de dejar escapar los errores del driver.
 
 ## Estado de los tests
 
-6 de 8 suites unitarias fallan actualmente. Son el scaffolding del Nest CLI sin modificar (`providers: [UsersService]` sin proveer el token del repositorio) y revientan al resolver la inyección de dependencias. Solo pasan `app.controller.spec.ts` y otra más. No interpretes un `npm test` fallido como una regresión causada por tu cambio: comprueba si la suite ya estaba rota y provee el mock de `*_REPOSITORY_TOKEN` al tocar una.
+4 de 10 suites unitarias fallan actualmente: `users.service.spec.ts`, `users.controller.spec.ts`, `roles.service.spec.ts` y `roles.controller.spec.ts`. Son el scaffolding del Nest CLI sin modificar (`providers: [UsersService]` sin proveer el token del repositorio) y revientan al resolver la inyección de dependencias. No interpretes un `npm test` fallido como una regresión causada por tu cambio: comprueba si la suite ya estaba rota y provee el mock de `*_REPOSITORY_TOKEN` al tocar una. `user-profiles.service.spec.ts` ya aplica ese patrón y sirve de referencia.
 
 ## Convenciones
 
