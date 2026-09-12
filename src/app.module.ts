@@ -20,7 +20,6 @@ import { UserProfilesModule } from './user-profiles/user-profiles.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        // Imprimimos en consola para depurar qué está leyendo NestJS
         console.log(
           '📌 USUARIO DETECTADO:',
           configService.get<string>('DB_USERNAME'),

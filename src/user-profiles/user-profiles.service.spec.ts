@@ -1,5 +1,3 @@
-// Los mocks de jest se pasan por referencia a expect(), lo que activa
-// unbound-method sin que exista riesgo real de scoping de `this`.
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';

@@ -35,8 +35,6 @@ export class UserProfilesController {
     return this.userProfilesService.findAll(countryCode);
   }
 
-  // Se declara antes de ':id' para que 'user' no sea capturado por la ruta
-  // paramétrica.
   @Get('user/:userId')
   findByUserId(@Param('userId') userId: string) {
     return this.userProfilesService.findByUserId(userId);
