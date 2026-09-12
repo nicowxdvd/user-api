@@ -31,7 +31,7 @@ export class User {
   @Column({ type: 'varchar', name: 'is_active', default: true })
   isActive: boolean | undefined;
 
-  @Column({ type: 'tinyint', name: 'role_id' })
+  @Column({ type: 'int', name: 'role_id' })
   roleId: number | undefined;
 
   @CreateDateColumn({ name: 'created_at' })
