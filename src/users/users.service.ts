@@ -7,6 +7,7 @@ import {
   USER_REPOSITORY_TOKEN,
   type IUserRepository,
 } from './interface/user-repository.interface';
+const ROL_POR_DEFECTO_ID = 11;
 
 @Injectable()
 export class UsersService {
@@ -16,7 +17,7 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const { email, password, firstName, lastName, roleId } = createUserDto;
+    const { email, password, firstName, lastName } = createUserDto;
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
@@ -31,7 +32,7 @@ export class UsersService {
         password: hashedPassword,
         firstName,
         lastName,
-        roleId,
+        roleId: ROL_POR_DEFECTO_ID,
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...userWithoutPassword } = user;

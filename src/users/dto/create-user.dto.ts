@@ -3,8 +3,6 @@ import {
   IsNotEmpty,
   MinLength,
   MaxLength,
-  IsInt,
-  Min,
   IsEmail,
   Matches,
 } from 'class-validator';
@@ -18,17 +16,13 @@ export class CreateUserDto {
 
   @IsString({ message: 'El apellido debe ser un texto' })
   @IsNotEmpty({ message: 'El apellido es obligatorio' })
-  @MinLength(3, { message: 'El apeliido debe tener al menos 3 caracteres' })
+  @MinLength(3, { message: 'El apellido debe tener al menos 3 caracteres' })
   @MaxLength(50, { message: 'El apellido no debe superar los 50 caracteres' })
   lastName: string = '';
 
-  @IsEmail()
+  @IsEmail({}, { message: 'El e-mail debe tener un formato válido' })
   @IsNotEmpty({ message: 'El e-mail es obligatorio' })
   email: string = '';
-
-  @IsInt()
-  @Min(0)
-  roleId: number = 0;
 
   @IsString({ message: 'La contraseña debe ser un texto' })
   @IsNotEmpty({ message: 'La contraseña es obligatoria' })
