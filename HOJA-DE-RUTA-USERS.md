@@ -179,7 +179,16 @@ orden deja un cambio que no se puede probar.
   - *Resultado:* resuelto con `{ type: 'boolean' }`. La columna es `tinyint`, los
     datos se conservaron y `GET /users` devuelve `isActive` como booleano. Ver el
     detalle en la sección 6.
-- [ ] **3.3** Resolver W-1: declarar `length` en `password` de forma explícita.
+- [x] **3.3** Resolver W-1: declarar `length` en `password` de forma explícita.
+  - *Resultado:* **W-1 se acepta, no se corrige.** La columna guarda un hash de
+    bcrypt, que mide siempre 60 caracteres, así que los 255 actuales tienen un
+    margen amplio y la columna nunca se llena. El riesgo que se había planteado
+    (que un cambio del valor por omisión de TypeORM truncara la columna) es
+    remoto y estaba sobredimensionado: W-1 es cosmético, no un defecto de
+    corrección. Queda el argumento de consistencia con `email`, que sí declara su
+    `length`, pero no justifica por sí solo tocar la entidad ahora.
+  - *Nota:* no ajustar la columna a 60 para que calce justo. Un hash de argon2
+    ronda los 97 caracteres y obligaría a alterarla de nuevo.
 - [ ] **3.4** Resolver W-2: homogeneizar la nullability tipada de `first_name` y
       `last_name`, aplicando a ambos la misma decisión.
 - [ ] **3.5** Resolver W-3: decidir si los dos nombres son obligatorios y dejar la

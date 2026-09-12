@@ -9,10 +9,7 @@ export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
   login(loginUserDto: LoginUserDto): LoginResponse {
-    if (
-      loginUserDto.email !== 'nicowxdvd@gmail.com' ||
-      loginUserDto.password !== '_nico_123'
-    ) {
+    if ( loginUserDto.email !== 'nicowxdvd@gmail.com' || loginUserDto.password !== '_nico_123') {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
