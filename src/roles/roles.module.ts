@@ -16,6 +16,5 @@ import { RoleRepository } from './repositories/role.repository';
       useClass: RoleRepository,
     },
   ],
-  exports: [ROLE_REPOSITORY_TOKEN],
 })
 export class RolesModule {}

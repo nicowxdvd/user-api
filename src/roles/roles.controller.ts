@@ -30,8 +30,6 @@ export class RolesController {
   @Public()
   @Get()
   findAll() {
-    // El listado es público porque se usa en el registro, por eso expone
-    // únicamente los roles activos sin importar lo que llegue por query.
     return this.rolesService.findAll(true);
   }
 
