@@ -9,9 +9,8 @@
 |===
 | Fecha | 2026-09-12
 | Rama | `develop`
-| Rango revisado | `origin/develop..develop` (`25a3f06..3ecccee`)
-| Commits | 5
-| Archivos | 8 (+64 / −19)
+| Rango revisado | `25a3f06..61a3852`
+| Estado | 2 resueltas, 15 abiertas
 |===
 
 Cada incidencia tiene una casilla para ir tachándolas de a una. El orden es por
@@ -19,37 +18,71 @@ severidad: primero lo que bloquea, después lo importante, al final la deuda que
 ya existía antes de estos commits.
 
 Las incidencias `INC-01` a `INC-05` salen de la revisión del diff. De `INC-06` en
-adelante son observaciones detectadas durante la sesión que viven fuera de estos
-cinco commits, pero que afectan a los mismos endpoints.
+adelante son observaciones detectadas durante la sesión que viven fuera de esos
+commits, pero que afectan a los mismos endpoints.
 
-== Bloqueantes
+== Resueltas
 
-=== [ ] INC-01 — Escalada de privilegios en el registro público
+=== [x] INC-01 — Escalada de privilegios en el registro público
 
 [cols="1,3"]
 |===
 | Severidad | *ALTA*
-| Archivo | `src/users/users.controller.ts:32`, `src/users/dto/create-user.dto.ts:31`
-| Estado | Abierta
+| Archivo | `src/users/users.controller.ts`, `src/users/dto/create-user.dto.ts`
+| Estado | *Resuelta* en `de5476c`
 |===
 
-`POST /users` quedó público con `@Public()`, pero `CreateUserDto` sigue aceptando
-un `roleId` elegido por quien llama. `UsersService.create` solo comprueba que el
-rol *exista y esté activo*; nunca que no sea un rol privilegiado.
+`POST /users` quedó público, pero `CreateUserDto` aceptaba un `roleId` elegido por
+quien llamaba. Un anónimo podía leer `GET /roles`, tomar el id de ADMIN y
+registrarse como administrador. Se confirmó en la práctica: durante la sesión se
+crearon tres usuarios con rol ADMIN sin enviar token.
 
-Camino de ataque completo, sin autenticación en ningún paso:
+*Solución aplicada:* se eliminó `roleId` de `CreateUserDto`. El campo ya no se acepta
+en el cuerpo, y el `forbidNonWhitelisted` del `ValidationPipe` global devuelve 400 si
+alguien lo manda. `UsersService.create` asigna el rol por su cuenta.
 
-. `GET /roles` — público desde `3ecccee`, devuelve `ADMIN` con su `id`
-. `POST /users` con ese `roleId` — crea un administrador
-. `POST /auth/login` — `AuthService` firma `role: user.role?.name` en el JWT
+Verificado: registro sin token ni `roleId` responde 201 con el rol fijo; enviando
+`roleId` responde 400. Ver `INC-17` por la deuda temporal que dejó la solución.
 
-Está confirmado en la práctica: durante la sesión se crearon tres usuarios con rol
-ADMIN sin enviar token (`ana.test.14181@mail.com`, `t3.8780@mail.com`,
-`t4.*@mail.com`). No se usó ningún truco, es el comportamiento normal del endpoint.
+=== [x] INC-04 — Los roles desactivados quedaban invisibles
 
-*Cómo se arregla:* quitar `roleId` de `CreateUserDto` y que el servicio asigne
-siempre un rol fijo no privilegiado. La asignación de roles debería vivir en un
-endpoint aparte, protegido.
+[cols="1,3"]
+|===
+| Severidad | *MEDIA*
+| Archivo | `src/roles/roles.controller.ts`
+| Estado | *Resuelta* en `61a3852`
+|===
+
+`GET /roles` se había abierto al público y se había limitado a roles activos, con lo
+que un rol desactivado desaparecía del único listado existente y quedaba sin forma de
+recuperar su id para reactivarlo.
+
+*Solución aplicada:* al fijar el servidor el rol de creación, el formulario de registro
+dejó de necesitar la lista de roles, así que el endpoint volvió a exigir token y se
+restauró el parámetro `isActive`.
+
+Verificado: sin token responde 401; con token devuelve los tres roles; con
+`?isActive=false` devuelve el rol inactivo.
+
+== Bloqueantes
+
+=== [ ] INC-08 — `RolesGuard` no aplica ninguna restricción
+
+[cols="1,3"]
+|===
+| Severidad | *ALTA*
+| Archivo | `src/common/decorators/guards/roles.guard.ts`
+|===
+
+`canActivate` devuelve `true` siempre y hace `console.log` de la request completa.
+El decorador `@Roles('ADMIN')` escribe la metadata `'roles'`, pero nadie la lee.
+Todas las restricciones por rol del proyecto son decorativas.
+
+Bloquea `INC-02` e `INC-03`: ninguna de las dos se puede cerrar mientras el guard no
+exista de verdad.
+
+El patrón a seguir ya está en el repositorio: `AuthGuard` lee la metadata con
+`reflector.getAllAndOverride`, igual que hace con `@Public()`.
 
 == Importantes
 
@@ -60,10 +93,9 @@ endpoint aparte, protegido.
 | Severidad | *MEDIA*
 | Archivo | `src/users/users.controller.ts:46`
 | Commit | `53835a1`
-| Estado | Abierta
 |===
 
-El commit que abre el registro también eliminó `@UseGuards(AuthGuard, RolesGuard)`
+El commit que abrió el registro también eliminó `@UseGuards(AuthGuard, RolesGuard)`
 y `@Roles('ADMIN')` de `create` y los agregó sobre `@Get(':id')`. Ese movimiento no
 tiene relación con el objetivo declarado del commit.
 
@@ -72,13 +104,11 @@ decoradores sobre `create`, con `findOne` sin ninguno.
 
 Dos consecuencias:
 
-. No protege nada. `RolesGuard.canActivate` devuelve `true` incondicionalmente y
-  nadie lee la metadata `'roles'`, así que el decorador solo *aparenta* restringir
-  `GET /users/:id`.
+. No protege nada, por `INC-08`.
 . Filtra el token en los logs. `RolesGuard` hace `console.log(request)` sobre la
-  request cruda de Express. `headers.authorization` queda a profundidad 2, que es
-  la que imprime `util.inspect` por defecto, así que cada lectura de perfil vuelca
-  el bearer del usuario al log.
+  request cruda de Express. `headers.authorization` queda a profundidad 2, que es la
+  que imprime `util.inspect` por defecto, así que cada lectura de perfil vuelca el
+  bearer del usuario al log.
 
 Además reaplica `AuthGuard` de forma redundante, porque ya está a nivel de clase.
 
@@ -86,81 +116,20 @@ Además reaplica `AuthGuard` de forma redundante, porque ya está a nivel de cla
 revisar el diff antes de commitear. Conviene revisar `git diff --staged` antes de
 cada commit.
 
-*Cómo se arregla:* decidir si `GET /users/:id` debe ser solo para ADMIN. Si sí,
-primero hay que implementar `RolesGuard` de verdad. Si no, revertir el movimiento.
-En cualquier caso, sacar el `console.log`.
-
 === [ ] INC-03 — Cualquiera que se registre puede leer el directorio completo
 
 [cols="1,3"]
 |===
 | Severidad | *MEDIA*
 | Archivo | `src/users/users.controller.ts:38`
-| Estado | Abierta
 |===
 
-`GET /users` pide token válido, pero ninguna restricción por rol. Combinado con el
-registro público, cualquier persona anónima puede crear una cuenta descartable,
-loguearse y volcar el correo, nombre, `roleId` y fechas de todos los usuarios.
+`GET /users` pide token válido, pero ninguna restricción por rol. Como el registro es
+público, cualquier persona puede crear una cuenta descartable, loguearse y volcar el
+correo, nombre, `roleId` y fechas de todos los usuarios.
 
-Antes de estos commits hacía falta una cuenta provista por alguien. Ahora la barrera
-es una sola request sin autenticar.
-
-*Cómo se arregla:* restringir `GET /users` por rol, lo que depende de tener
-`RolesGuard` funcionando. Ver `INC-08`.
-
-=== [ ] INC-04 — Los roles desactivados quedan invisibles y no se pueden reactivar
-
-[cols="1,3"]
-|===
-| Severidad | *MEDIA*
-| Archivo | `src/roles/roles.controller.ts:30`
-| Estado | Abierta
-|===
-
-`findAll` perdió el parámetro `isActive` y ahora fija `findAll(true)`.
-`PATCH /roles/:id/status` permite desactivar un rol, pero `GET /roles` es el único
-listado: una vez desactivado, el rol desaparece y no queda forma de descubrir su `id`
-para volver a activarlo. Hoy le pasa a `REVISOR` (`id: 5`).
-
-Efecto secundario: `GET /roles?isActive=false` ya no falla ni filtra. El
-`ValidationPipe` global aplica `whitelist` y `forbidNonWhitelisted` a los cuerpos
-ligados a un DTO, no a query strings sueltas, así que un cliente administrativo que
-pida roles inactivos recibe los activos en silencio, sin un 400 que lo avise.
-
-*Cómo se arregla:* un endpoint aparte protegido, tipo `GET /roles/all`, que conserve
-el filtro completo para quien esté autenticado.
-
-== Menores
-
-=== [ ] INC-05 — `auth.guard.spec.ts` no compila
-
-[cols="1,3"]
-|===
-| Severidad | *BAJA*
-| Archivo | `src/auth/auth.guard.spec.ts:5`
-| Estado | Abierta
-|===
-
-`AuthGuard` pasó a recibir dos argumentos (`JwtService` y `Reflector`), pero el spec
-sigue haciendo `new AuthGuard()`.
-
-[source]
-----
-src/auth/auth.guard.spec.ts(5,12): error TS2554: Expected 2 arguments, but got 0.
-----
-
-Es el único error de tipos del repositorio. No es una regresión: en `main` el
-constructor ya pedía un argumento obligatorio, así que la llamada era igual de
-inválida. `npm run build` no lo ve porque `tsconfig.build.json` excluye los specs.
-
-*Cómo se arregla:* usar `Test.createTestingModule` con mocks de `JwtService` y
-`Reflector`, como hacen el resto de los specs que sí funcionan.
-
-== Deuda preexistente
-
-Nada de esto lo introdujeron los cinco commits, pero toca los mismos endpoints y
-condiciona los arreglos de arriba.
+`INC-01` no cambia esto: el atacante ya no obtiene rol ADMIN, pero un rol básico
+alcanza para leer el directorio. Depende de `INC-08`.
 
 === [ ] INC-06 — `User.isActive` es `varchar` pero está tipado como `boolean`
 
@@ -175,39 +144,64 @@ La columna se declara `{ type: 'varchar' }` aunque la propiedad sea `boolean`.
 `"0"` de MySQL es una cadena no vacía, o sea *truthy*, así que un usuario inactivo
 pasaría el chequeo y podría iniciar sesión.
 
-Conviene confirmarlo con un caso real antes de tocar nada.
+Sin comprobar contra la base: es deducción a partir del tipo de columna. Conviene
+verificarlo con un usuario inactivo real antes de tocar nada.
 
-NOTE: `Role.isActive` sí es `{ type: 'boolean' }`, así que la validación nueva de
-`INC-01` no sufre este problema. Se verificó durante la revisión.
+NOTE: `Role.isActive` sí es `{ type: 'boolean' }`. Se verificó durante la revisión.
 
 === [ ] INC-07 — `UsersService.remove` no borra nada
 
 [cols="1,3"]
 |===
 | Severidad | *MEDIA*
-| Archivo | `src/users/users.service.ts:60`
+| Archivo | `src/users/users.service.ts`
 |===
 
 Devuelve el string `This action removes a #${id} user` sin tocar la base. El endpoint
-`DELETE /users/:id` responde como si hubiera funcionado. Por eso los tres usuarios de
-prueba con rol ADMIN no se pueden eliminar por la API.
+`DELETE /users/:id` responde como si hubiera funcionado.
 
 Además el mensaje está en inglés, contra la convención del proyecto.
 
-=== [ ] INC-08 — `RolesGuard` no aplica ninguna restricción
+=== [ ] INC-14 — `PATCH /users/:id` exige todos los campos
 
 [cols="1,3"]
 |===
-| Severidad | *ALTA* (bloquea INC-02 e INC-03)
-| Archivo | `src/common/decorators/guards/roles.guard.ts`
+| Severidad | *MEDIA*
+| Archivo | `src/users/dto/create-user.dto.ts`, `src/users/dto/update-user.dto.ts`
 |===
 
-`canActivate` devuelve `true` siempre y hace `console.log` de la request completa.
-El decorador `@Roles('ADMIN')` escribe la metadata `'roles'`, pero nadie la lee.
-Todas las restricciones por rol del proyecto son decorativas.
+Un `PATCH` con `{"firstName":"SoloNombre"}` responde 400 reclamando apellido y correo.
+`UpdateUserDto` usa `PartialType`, pero los campos de `CreateUserDto` tienen
+inicializador (`firstName: string = ''`). Con `transform: true`, `class-transformer`
+materializa esos valores por defecto, así que el campo llega como cadena vacía y
+`@IsNotEmpty` dispara. `@IsOptional` solo omite valores `undefined` o `null`.
 
-El patrón a seguir ya existe en el repositorio: `AuthGuard` lee la metadata con
-`reflector.getAllAndOverride`, igual que hace con `@Public()`.
+Resultado: el `PATCH` solo funciona con el cuerpo completo, o sea que no es un `PATCH`.
+
+*Cómo se arregla:* quitar los inicializadores de los DTOs y declarar las propiedades
+con `!` o como opcionales.
+
+== Menores
+
+=== [ ] INC-05 — `auth.guard.spec.ts` no compila
+
+[cols="1,3"]
+|===
+| Severidad | *BAJA*
+| Archivo | `src/auth/auth.guard.spec.ts:5`
+|===
+
+`AuthGuard` pasó a recibir dos argumentos (`JwtService` y `Reflector`), pero el spec
+sigue haciendo `new AuthGuard()`.
+
+[source]
+----
+src/auth/auth.guard.spec.ts(5,12): error TS2554: Expected 2 arguments, but got 0.
+----
+
+No es una regresión: en `main` el constructor ya pedía un argumento obligatorio, así
+que la llamada era igual de inválida. `npm run build` no lo ve porque
+`tsconfig.build.json` excluye los specs.
 
 === [ ] INC-09 — Cuatro suites de test rotas
 
@@ -220,20 +214,17 @@ El patrón a seguir ya existe en el repositorio: `AuthGuard` lee la metadata con
 Las cuatro son scaffolding del CLI de Nest sin modificar, con `providers: [XService]`
 pelado y sin mock del token de repositorio. Fallan al resolver dependencias.
 
-`users.service.spec.ts` ahora necesita *dos* mocks: `USER_REPOSITORY_TOKEN` y
-`ROLE_REPOSITORY_TOKEN`.
-
 === [ ] INC-10 — `main.ts` ignora la variable `PORT`
 
 [cols="1,3"]
 |===
 | Severidad | *BAJA*
-| Archivo | `src/main.ts:16`
+| Archivo | `src/main.ts`
 |===
 
-`.env` declara `PORT=3000` pero el código hace `app.listen(3001)` fijo. La variable
-nunca se lee. Cuidado al corregirlo: el puerto 3000 lo ocupa un servidor Next.js en
-esta máquina, así que leer `PORT` tal como está hoy haría chocar la API.
+`.env` declara `PORT=3000` pero el código hace `app.listen(3001)` fijo. Cuidado al
+corregirlo: el puerto 3000 lo ocupa un servidor Next.js en esta máquina, así que leer
+`PORT` tal como está hoy haría chocar la API.
 
 === [ ] INC-11 — Archivos de herramientas versionados
 
@@ -253,9 +244,8 @@ El primero solo guarda un PID que cambia en cada sesión, así que ensucia
 | Severidad | *BAJA*
 |===
 
-`npx prettier --check src/` falla en 47 archivos. No es una regresión de estos
-commits, pero mientras siga así el formato no sirve como señal en las revisiones.
-Hay una línea en blanco de más en `users.controller.ts:30`.
+`npx prettier --check src/` falla en 47 archivos. Mientras siga así, el formato no
+sirve como señal en las revisiones.
 
 === [ ] INC-13 — `CLAUDE.md` desactualizado
 
@@ -266,32 +256,91 @@ Hay una línea en blanco de más en `users.controller.ts:30`.
 |===
 
 Describe `AuthService.login` con credenciales fijas (`nico` / `_nico_123`) y el
-secreto JWT incrustado en `auth.module.ts`. Ambas cosas ya están resueltas: el login
-consulta la base con bcrypt y el secreto sale de `ConfigService`. También hay que
-documentar el decorador `@Public()` y el módulo `src/user-profiles/`, que no aparece.
+secreto JWT incrustado en `auth.module.ts`. Ambas cosas ya están resueltas. Falta
+documentar el decorador `@Public()`, la regla del rol fijo y el módulo
+`src/user-profiles/`, que no aparece.
+
+=== [ ] INC-15 — Los mensajes del `ValidationPipe` salen en inglés
+
+[cols="1,3"]
+|===
+| Severidad | *BAJA*
+| Archivo | `src/main.ts`
+|===
+
+Enviar un campo no declarado devuelve `"property roleId should not exist"`. El mensaje
+lo genera el `ValidationPipe`, no un DTO, así que no lo cubren los `message` en español
+de las validaciones. El `CLAUDE.md` exige que toda respuesta al usuario esté en
+español.
+
+*Cómo se arregla:* pasar un `exceptionFactory` al `ValidationPipe` global que traduzca
+o reemplace esos mensajes.
+
+=== [ ] INC-16 — Seis errores de lint en `user-profiles.service.ts`
+
+[cols="1,3"]
+|===
+| Severidad | *BAJA*
+| Archivo | `src/user-profiles/user-profiles.service.ts`
+|===
+
+Seis errores `@typescript-eslint/no-unsafe-member-access` en las líneas 28, 79 y 99,
+por el acceso a `error.code` y `error.errno`. Es el mismo patrón que usan
+`users.service.ts` y `roles.service.ts`, pero a este archivo le falta el
+`eslint-disable` de cabecera que los otros dos sí tienen.
+
+Son los únicos errores de lint del proyecto.
+
+=== [ ] INC-17 — El id del rol por defecto está cableado en el código
+
+[cols="1,3"]
+|===
+| Severidad | *BAJA*
+| Archivo | `src/users/users.service.ts`
+| Commit | `de5476c`
+|===
+
+`UsersService.create` asigna `ROL_POR_DEFECTO_ID = 11`. Es una solución temporal
+acordada, a la espera de que la columna `role_id` reciba su propio `DEFAULT` en la
+base de datos.
+
+Dos cosas a tener presentes cuando llegue esa tarea:
+
+. El 11 es el id que tomó el rol `USUARIO` en esta base por autoincremento. En otra
+  base el mismo rol puede tener otro id, y la aplicación crearía usuarios apuntando a
+  un rol equivocado sin avisar.
+. `synchronize: true` deriva el esquema de las entidades en cada arranque, así que un
+  `DEFAULT` puesto con `ALTER TABLE` a mano no sobrevive. Tiene que vivir en el
+  decorador `@Column` de `User.roleId`.
 
 == Resumen
 
-[cols="1,4,1"]
+[cols="1,4,1,1"]
 |===
-| ID | Incidencia | Severidad
+| ID | Incidencia | Severidad | Estado
 
-| INC-01 | Escalada de privilegios en el registro público | ALTA
-| INC-02 | Guard de ADMIN movido a `findOne` y token en los logs | MEDIA
-| INC-03 | Directorio de usuarios legible tras auto-registro | MEDIA
-| INC-04 | Roles desactivados quedan invisibles | MEDIA
-| INC-05 | `auth.guard.spec.ts` no compila | BAJA
-| INC-06 | `User.isActive` es `varchar` tipado `boolean` | MEDIA
-| INC-07 | `UsersService.remove` no borra | MEDIA
-| INC-08 | `RolesGuard` no restringe nada | ALTA
-| INC-09 | Cuatro suites de test rotas | BAJA
-| INC-10 | `main.ts` ignora `PORT` | BAJA
-| INC-11 | Archivos de herramientas versionados | BAJA
-| INC-12 | Formato inconsistente | BAJA
-| INC-13 | `CLAUDE.md` desactualizado | BAJA
+| INC-01 | Escalada de privilegios en el registro público | ALTA | Resuelta
+| INC-04 | Roles desactivados quedaban invisibles | MEDIA | Resuelta
+| INC-08 | `RolesGuard` no restringe nada | ALTA | Abierta
+| INC-02 | Guard de ADMIN movido a `findOne` y token en los logs | MEDIA | Abierta
+| INC-03 | Directorio de usuarios legible tras auto-registro | MEDIA | Abierta
+| INC-06 | `User.isActive` es `varchar` tipado `boolean` | MEDIA | Abierta
+| INC-07 | `UsersService.remove` no borra | MEDIA | Abierta
+| INC-14 | `PATCH /users/:id` exige todos los campos | MEDIA | Abierta
+| INC-05 | `auth.guard.spec.ts` no compila | BAJA | Abierta
+| INC-09 | Cuatro suites de test rotas | BAJA | Abierta
+| INC-10 | `main.ts` ignora `PORT` | BAJA | Abierta
+| INC-11 | Archivos de herramientas versionados | BAJA | Abierta
+| INC-12 | Formato inconsistente | BAJA | Abierta
+| INC-13 | `CLAUDE.md` desactualizado | BAJA | Abierta
+| INC-15 | Mensajes del `ValidationPipe` en inglés | BAJA | Abierta
+| INC-16 | Seis errores de lint en `user-profiles.service.ts` | BAJA | Abierta
+| INC-17 | Id del rol por defecto cableado | BAJA | Abierta
 |===
 
 === Orden sugerido
 
 `INC-08` primero: sin un `RolesGuard` real, `INC-02` e `INC-03` no tienen arreglo
-posible. Después `INC-01`, que es el agujero con camino de ataque confirmado.
+posible, y entre las dos dejan el directorio de usuarios abierto y el token en los
+logs. Después `INC-14`, que rompe una operación de uso diario. `INC-17` se cierra sola
+cuando llegue la tarea de base de datos.
