@@ -30,11 +30,15 @@ Verificado sobre `develop` el 2026-09-12.
   dejar el sistema sin forma de configurarse. Sigue sin gate de permiso, igual que
   antes: `POST /roles`, `DELETE /roles/:id` y `PATCH /roles/:id/status`, solo token
   válido. (`users.controller.ts`, `auth/permissions.guard.ts`, `permissions/`)
-- [ ] `POST /roles`, `DELETE /roles/:id` y `PATCH /roles/:id/status` quedaron fuera del
-  alcance del punto anterior: cualquier cuenta con token válido todavía puede crear,
+- [x] `POST /roles`, `DELETE /roles/:id` y `PATCH /roles/:id/status` quedaron fuera del
+  alcance del punto anterior: cualquier cuenta con token válido todavía podía crear,
   borrar o activar/desactivar roles, sin exigir `permissions:manage` ni ningún otro
-  permiso. Decidir si conviene gatearlos igual que se hizo con `PATCH
-  /roles/:id/permissions`. (`roles.controller.ts`)
+  permiso. Resuelto con un permiso propio, `roles:manage`, en vez de reusar
+  `permissions:manage` (que es para administrar el modelo de permisos, no los roles en
+  sí): mismo mecanismo `PermissionsGuard` + `@RequirePermissions()` que ya usa `PATCH
+  /roles/:id/permissions`. `GET /roles` queda sin gate, solo token, porque no expone
+  nada tan sensible como el listado de usuarios. El permiso hay que crearlo a mano vía
+  `POST /permissions` y asignarlo al rol correspondiente; no hay seed. (`roles.controller.ts`)
 
 ## Funcionalidad rota
 

@@ -16,6 +16,8 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
 
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions('roles:manage')
   @Post()
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.rolesService.create(createRoleDto);
@@ -30,6 +32,8 @@ export class RolesController {
   }
 
 
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions('roles:manage')
   @Patch(':id/status')
   toggleStatus(@Param('id', ParseIntPipe) id: number) {
     return this.rolesService.toggleStatus(id);
@@ -46,6 +50,8 @@ export class RolesController {
   }
 
 
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions('roles:manage')
   @Delete(':id')
   remove(@Param('id') id: number) {
     return this.rolesService.remove(+id);
