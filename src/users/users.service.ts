@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -64,6 +65,12 @@ export class UsersService {
   }
 
   update(id: string, updateUserDto: UpdateUserDto) {
+    if (Object.keys(updateUserDto).length === 0) {
+      throw new BadRequestException(
+        'Debe enviar al menos un campo para actualizar',
+      );
+    }
+
     return this.userRepository.update(id, updateUserDto);
   }
 
