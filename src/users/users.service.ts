@@ -8,8 +8,6 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
-import { plainToInstance } from 'class-transformer';
-import { UserResponseDto } from './dto/user-response.dto';
 import {
   USER_REPOSITORY_TOKEN,
   type IUserRepository,
@@ -64,9 +62,7 @@ export class UsersService {
       throw new NotFoundException('El usuario del token ya no existe');
     }
 
-    return plainToInstance(UserResponseDto, user, {
-      excludeExtraneousValues: true,
-    });
+    return user;
   }
 
   findAll(roleActive?: boolean) {
