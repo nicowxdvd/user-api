@@ -1,13 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, BadRequestException, UseGuards, ClassSerializerInterceptor, UseInterceptors, Put, ParseBoolPipe, Query, Req, UseFilters } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, BadRequestException, UseGuards, ClassSerializerInterceptor, UseInterceptors, Put, ParseBoolPipe, ParseIntPipe, Query, Req, UseFilters } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { PermissionsGuard } from '../auth/permissions.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 import type { Request } from 'express';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { QueryFailedFilter } from '../common/filters/query-failed.filter';
 
+@ApiTags('users')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new QueryFailedFilter({ duplicado: 'El correo electrónico ya está registrado', referenciado: 'No se puede eliminar el usuario porque tiene registros asociados', referenciaInvalida: 'El rol indicado no existe' }))
@@ -25,9 +30,15 @@ export class UsersController {
   }
 
 
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions('users:list')
   @Get()
-  findAll(@Query('roleActive', new ParseBoolPipe({ optional: true })) roleActive?: boolean) {
-    return this.usersService.findAll(roleActive);
+  findAll(
+    @Query('roleActive', new ParseBoolPipe({ optional: true })) roleActive?: boolean,
+    @Query('cursor') cursor?: string,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    return this.usersService.findAll(roleActive, cursor, limit);
 
   }
 
@@ -57,6 +68,13 @@ export class UsersController {
   @Put(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
+
+  }
+
+
+  @Patch(':id/status')
+  toggleStatus(@Param('id') id: string) {
+    return this.usersService.toggleStatus(id);
 
   }
 

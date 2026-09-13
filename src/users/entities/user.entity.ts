@@ -1,8 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Role } from '../../roles/entities/role.entity';
 
 @Entity('users')
+@Index(['createdAt', 'id'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string | undefined;
@@ -14,16 +15,16 @@ export class User {
   @Exclude()
   password: string | undefined;
 
-  @Column({ type: 'varchar', name: 'first_name', nullable: true })
-  firstName: string = '';
+  @Column({ type: 'varchar', name: 'first_name' })
+  firstName: string | undefined;
 
-  @Column({ type: 'varchar', name: 'last_name', nullable: true })
+  @Column({ type: 'varchar', name: 'last_name' })
   lastName: string | undefined;
 
   @Column({ type: 'boolean', name: 'is_active', default: true })
   isActive: boolean | undefined;
 
-  @Column({ type: 'int', name: 'role_id' })
+  @Column({ type: 'int', name: 'role_id', default: 11 })
   roleId: number | undefined;
 
   @CreateDateColumn({ name: 'created_at' })

@@ -8,31 +8,22 @@ describe('UserProfilesController', () => {
   let controller: UserProfilesController;
 
   beforeEach(async () => {
+    const repositoryMock = { save: jest.fn(), findAll: jest.fn(), findById: jest.fn(), findByUserId: jest.fn(), update: jest.fn(), delete: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserProfilesController],
-      providers: [
-        UserProfilesService,
-        {
-          provide: USER_PROFILE_REPOSITORY_TOKEN,
-          useValue: {
-            save: jest.fn(),
-            findAll: jest.fn(),
-            findById: jest.fn(),
-            findByUserId: jest.fn(),
-            update: jest.fn(),
-            delete: jest.fn(),
-          },
-        },
-      ],
+      providers: [UserProfilesService, { provide: USER_PROFILE_REPOSITORY_TOKEN, useValue: repositoryMock }],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
     controller = module.get<UserProfilesController>(UserProfilesController);
+
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+
   });
 });

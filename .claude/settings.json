@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Bash(git merge *)",
+            "prompt": "Actuá como el agente api-validator definido en .claude/agents/api-validator.md (leé ese archivo primero para saber qué revisar). Acaba de correr este comando de git: $ARGUMENTS. Confirmá con `git branch --show-current` si estás en `main`; si no, respondé 'N/A' y terminá sin hacer nada más. Si sí, revisá con las reglas del agente lo que ese merge trajo a la API.",
+            "timeout": 120,
+            "statusMessage": "Validando el release recién mergeado a main..."
+          }
+        ]
+      }
+    ]
+  }
+}
