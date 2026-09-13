@@ -30,7 +30,8 @@ export class UsersService {
 
   async findMe(id: string) {
     const user = await this.userRepository.findById(id);
-    if (!user) throw new NotFoundException('El usuario del token ya no existe');
+    if (!user) 
+      throw new NotFoundException('El usuario del token ya no existe');
 
     return user;
 
@@ -45,7 +46,8 @@ export class UsersService {
 
   async findOne(id: string) {
     const user = await this.userRepository.findById(id);
-    if (!user) throw new NotFoundException(`El usuario con ID ${id} no existe`);
+    if (!user)
+      throw new NotFoundException(`El usuario con ID ${id} no existe`);
 
     return user;
 

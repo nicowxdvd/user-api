@@ -9,6 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolesModule } from './roles/roles.module';
 import { UserProfilesModule } from './user-profiles/user-profiles.module';
+import { PermissionsModule } from './permissions/permissions.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { UserProfilesModule } from './user-profiles/user-profiles.module';
     }),
     RolesModule,
     UserProfilesModule,
+    PermissionsModule,
   ],
   controllers: [AppController],
   providers: [
