@@ -30,13 +30,14 @@ Verificado sobre `develop` el 2026-09-12.
 
 ## Contrato y consistencia
 
-- [ ] El id del rol por defecto está cableado: `ROL_POR_DEFECTO_ID = 11` en
+- [x] El id del rol por defecto está cableado: `ROL_POR_DEFECTO_ID = 11` en
   `users.service.ts`. En otra base ese id es otro rol, y si no existe, el insert falla
   con errno 1452; desde que existe `QueryFailedFilter` el cliente recibe un 409 con
   «El rol indicado no existe» en vez de un 500, pero el id sigue cableado. Lo acordado
   es mover el valor por omisión al `@Column` de `User.roleId`, porque con
   `synchronize: true` un `DEFAULT` puesto a mano con `ALTER TABLE` no sobrevive al
-  siguiente arranque.
+  siguiente arranque. Resuelto: `default: 11` en el `@Column`, constante eliminada del
+  servicio. El id sigue cableado, solo cambió de lugar.
 - [ ] `POST /roles` perdió el nombre del rol en el mensaje de conflicto. Antes decía
   `El rol 'ADMIN' ya existe.`, interpolando el dato de la request; ahora responde
   `Ya existe un rol con ese nombre`, porque el mensaje lo fija `QueryFailedFilter` a
