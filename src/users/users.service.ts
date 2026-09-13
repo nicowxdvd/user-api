@@ -2,7 +2,10 @@ import { BadRequestException, ConflictException, Inject, Injectable, NotFoundExc
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
-import { USER_REPOSITORY_TOKEN, type IUserRepository } from './interface/user-repository.interface';
+import { USER_REPOSITORY_TOKEN, type IUserRepository, type UsersCursor } from './interface/user-repository.interface';
+
+const LIMITE_POR_DEFECTO = 20;
+const LIMITE_MAXIMO      = 100;
 
 @Injectable()
 export class UsersService {
@@ -38,8 +41,24 @@ export class UsersService {
   }
 
 
-  findAll(roleActive?: boolean) {
-    return this.userRepository.findAll(roleActive);
+  findAll(roleActive?: boolean, cursorToken?: string, limit?: number) {
+    const take = limit ?? LIMITE_POR_DEFECTO;
+    if (take < 1 || take > LIMITE_MAXIMO)
+      throw new BadRequestException(`El límite debe ser un número entre 1 y ${LIMITE_MAXIMO}`);
+
+    return this.userRepository.findAll(roleActive, this.decodeCursor(cursorToken), take);
+
+  }
+
+
+  private decodeCursor(cursorToken?: string): UsersCursor | undefined {
+    if (!cursorToken) return undefined;
+
+    const [createdAt, id] = Buffer.from(cursorToken, 'base64').toString('utf8').split('|');
+    if (!createdAt || !id || Number.isNaN(Date.parse(createdAt)))
+      throw new BadRequestException('El cursor de paginación no es válido');
+
+    return { createdAt: new Date(createdAt), id };
 
   }
 

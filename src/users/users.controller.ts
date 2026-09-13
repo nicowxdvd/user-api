@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, BadRequestException, UseGuards, ClassSerializerInterceptor, UseInterceptors, Put, ParseBoolPipe, Query, Req, UseFilters } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, BadRequestException, UseGuards, ClassSerializerInterceptor, UseInterceptors, Put, ParseBoolPipe, ParseIntPipe, Query, Req, UseFilters } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -33,8 +33,12 @@ export class UsersController {
   @UseGuards(PermissionsGuard)
   @RequirePermissions('users:list')
   @Get()
-  findAll(@Query('roleActive', new ParseBoolPipe({ optional: true })) roleActive?: boolean) {
-    return this.usersService.findAll(roleActive);
+  findAll(
+    @Query('roleActive', new ParseBoolPipe({ optional: true })) roleActive?: boolean,
+    @Query('cursor') cursor?: string,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    return this.usersService.findAll(roleActive, cursor, limit);
 
   }
 

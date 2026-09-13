@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
-import { IUserRepository } from '../interface/user-repository.interface';
+import { IUserRepository, UsersCursor, UsersPage } from '../interface/user-repository.interface';
 
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -10,14 +10,28 @@ export class UserRepository implements IUserRepository {
   constructor(@InjectRepository(User) private readonly typeormRepo: Repository<User>) {}
 
 
-  async findAll(roleActive?: boolean): Promise<User[]> {
-    return await this.typeormRepo.find({
-      relations: { role: true },
-      where: roleActive !== undefined ? { role: { isActive: roleActive } } : {},
-      select: {
-        id: true, firstName: true, lastName: true, isActive: true, roleId: true, createdAt: true, updatedAt: true, role: { id: true, name: true }
-      },
-    });
+  async findAll(roleActive?: boolean, cursor?: UsersCursor, limit = 20): Promise<UsersPage> {
+    const query = this.typeormRepo
+      .createQueryBuilder('user')
+      .leftJoin('user.role', 'role')
+      .select(['user.id', 'user.firstName', 'user.lastName', 'user.isActive', 'user.roleId', 'user.createdAt', 'user.updatedAt', 'role.id', 'role.name'])
+      .orderBy('user.createdAt', 'ASC')
+      .addOrderBy('user.id', 'ASC')
+      .take(limit);
+
+    if (roleActive !== undefined)
+      query.andWhere('role.isActive = :roleActive', { roleActive });
+
+    // Keyset: la página siguiente arranca después de la última fila vista, no en un offset.
+    // Evita el escaneo y descarte que hace MySQL con OFFSET a medida que crece la tabla.
+    if (cursor)
+      query.andWhere('(user.createdAt, user.id) > (:cursorCreatedAt, :cursorId)', { cursorCreatedAt: cursor.createdAt, cursorId: cursor.id });
+
+    const data = await query.getMany();
+    const last = data.length === limit ? data[data.length - 1] : undefined;
+    const nextCursor = last ? Buffer.from(`${last.createdAt!.toISOString()}|${last.id}`).toString('base64') : null;
+
+    return { data, nextCursor };
 
   }
 
