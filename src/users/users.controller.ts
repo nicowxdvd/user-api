@@ -6,7 +6,8 @@ import {
   Patch,
   Param,
   Delete,
-  ParseIntPipe,
+  ParseUUIDPipe,
+  BadRequestException,
   UseGuards,
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -69,7 +70,16 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () =>
+          new BadRequestException('El id del usuario debe ser un UUID válido'),
+      }),
+    )
+    id: string,
+  ) {
     return this.usersService.remove(id);
   }
 }

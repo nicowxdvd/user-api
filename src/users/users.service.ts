@@ -3,6 +3,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -77,7 +78,24 @@ export class UsersService {
     return this.userRepository.update(id, updateUserDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string): Promise<{ message: string }> {
+    try {
+      const result = await this.userRepository.delete(id);
+      if (!result || result.affected === 0) {
+        throw new NotFoundException(`El usuario con ID ${id} no existe`);
+      }
+      return { message: `Usuario con ID ${id} eliminado exitosamente` };
+    } catch (error: any) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (error?.errno === 1451 || error?.code === 'ER_ROW_IS_REFERENCED_2') {
+        throw new ConflictException(
+          'No se puede eliminar el usuario porque tiene registros asociados',
+        );
+      }
+      throw new InternalServerErrorException('Error al eliminar el usuario');
+    }
   }
 }

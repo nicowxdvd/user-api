@@ -22,16 +22,17 @@ Verificado sobre `develop` el 2026-09-12.
   `transform: true` llegan como cadena vacía, así que `@IsNotEmpty` dispara aunque el
   campo no se haya enviado. Se arregla quitando los inicializadores y declarando las
   propiedades con `!` o como opcionales. (`create-user.dto.ts`)
-- [ ] `DELETE /users/:id` no borra nada y responde como si hubiera funcionado.
-  `UsersService.remove` devuelve el literal `This action removes a #${id} user`,
-  además en inglés; `IUserRepository` no declara método de borrado; y el parámetro usa
-  `ParseIntPipe` cuando el id es un UUID. Contemplar errno 1451 si el usuario tiene
-  registros asociados. `IUserProfileRepository.delete` es la referencia de forma.
-  (`users.service.ts:80`, `users.controller.ts:71`)
+- [ ] Borrar un usuario deja huérfano su perfil. `user_profiles.user_id` es un `varchar`
+  suelto: la entidad no declara `@ManyToOne` hacia `User` y la base tampoco tiene la
+  foreign key —la única que existe es `users.role_id → roles`—, así que nada impide que
+  quede una fila apuntando a un usuario que ya no está. Decidir entre declarar la
+  relación con `onDelete: 'CASCADE'` o borrar el perfil junto con el usuario dentro de
+  una transacción. Mientras esa FK no exista, el manejo del errno 1451 que ya tiene
+  `UsersService.remove` no se dispara nunca.
 - [ ] `findOne` devuelve `null` en vez de lanzar `NotFoundException`: un id inexistente
-  responde 200 con cuerpo vacío. (`users.service.ts:72`)
+  responde 200 con cuerpo vacío. (`users.service.ts:73`)
 - [ ] `update` no verifica que el usuario exista ni traduce los errores del driver.
-  (`users.service.ts:76`)
+  (`users.service.ts:77`)
 - [ ] No hay forma de activar ni desactivar un usuario desde la API: ningún DTO declara
   `isActive`, así que la columna nunca se escribe y todas las filas conservan el valor
   por omisión. Decidir si va en el DTO de actualización o en un endpoint de cambio de
@@ -70,7 +71,7 @@ Verificado sobre `develop` el 2026-09-12.
   sí tienen `users.service.ts` y `roles.service.ts`. Son los únicos errores del
   proyecto.
 - [ ] 3 advertencias de lint: dos directivas `eslint-disable` sin uso en
-  `users.service.ts` (líneas 1 y 33) y una promesa sin await en `main.ts:18`.
+  `users.service.ts` (líneas 1 y 34) y una promesa sin await en `main.ts:18`.
 - [ ] Archivos de herramientas versionados: `.claude/.headroom_wrap_marker.json`,
   `.serena/project.yml` y `.serena/.gitignore`. El primero solo guarda un PID que
   cambia en cada sesión, así que ensucia `git status` de forma permanente. Van al
