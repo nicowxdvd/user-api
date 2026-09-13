@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('user_profiles')
 export class UserProfile {
@@ -13,6 +16,13 @@ export class UserProfile {
 
   @Column({ type: 'varchar', length: 36, name: 'user_id', unique: true })
   userId!: string;
+
+  // Relación 1 a 1 sobre la misma columna `user_id`: el borrado en cascada lo
+  // resuelve MySQL vía FK, sin transacciones manuales entre módulos. Mismo
+  // patrón que `User.roleId` + `User.role` sobre `role_id`.
+  @OneToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user?: User;
 
   @Column({ type: 'varchar', length: 255, name: 'avatar_url', nullable: true })
   avatarUrl?: string | null;

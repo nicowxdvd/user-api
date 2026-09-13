@@ -17,18 +17,6 @@ Verificado sobre `develop` el 2026-09-12.
 
 ## Funcionalidad rota
 
-- [ ] `PATCH /users/:id` exige el cuerpo completo, o sea que no es un `PATCH`. Los
-  campos de `CreateUserDto` tienen inicializador (`firstName: string = ''`) y con
-  `transform: true` llegan como cadena vacía, así que `@IsNotEmpty` dispara aunque el
-  campo no se haya enviado. Se arregla quitando los inicializadores y declarando las
-  propiedades con `!` o como opcionales. (`create-user.dto.ts`)
-- [ ] Borrar un usuario deja huérfano su perfil. `user_profiles.user_id` es un `varchar`
-  suelto: la entidad no declara `@ManyToOne` hacia `User` y la base tampoco tiene la
-  foreign key —la única que existe es `users.role_id → roles`—, así que nada impide que
-  quede una fila apuntando a un usuario que ya no está. Decidir entre declarar la
-  relación con `onDelete: 'CASCADE'` o borrar el perfil junto con el usuario dentro de
-  una transacción. Mientras esa FK no exista, el errno 1451 que traduce
-  `QueryFailedFilter` no se dispara nunca para este caso.
 - [ ] `findOne` devuelve `null` en vez de lanzar `NotFoundException`: un id inexistente
   responde 200 con cuerpo vacío. (`users.service.ts:62`)
 - [ ] `update` no verifica que el usuario exista: un id inexistente responde 200 con
@@ -67,6 +55,20 @@ Verificado sobre `develop` el 2026-09-12.
   el pipe global. (`main.ts`)
 - [ ] `main.ts` ignora la variable `PORT` y hace `app.listen(3001)` fijo. Cuidado al
   corregirlo: el puerto 3000 que declara `.env` lo ocupa un Next.js en esta máquina.
+
+## Funcionalidad nueva
+
+- [ ] `POST /users` no manda correo de bienvenida al crear la cuenta. Acordado hasta
+  ahora: emitirlo recién después del `await this.userRepository.save(...)` en
+  `UsersService.create` (nunca antes, para no notificar un registro que todavía puede
+  fallar), desacoplado del request con `@nestjs/event-emitter` en vez de una llamada
+  directa a un `MailService` dentro del propio `create`. La plantilla arranca como un
+  template literal simple (un solo correo, el de bienvenida); migrar a un motor tipo
+  Handlebars (`@nestjs-modules/mailer`) solo si aparece un segundo o tercer correo.
+  Pendiente de decidir si el registro masivo es un escenario real: si lo es, el
+  `EventEmitter2` no alcanza (sin persistencia, sin backpressure, sin reintentos) y
+  hay que pasar a una cola (`@nestjs/bull`/`@nestjs/bullmq` con Redis), que agrega
+  Redis como infraestructura nueva al proyecto. Revisar al final.
 
 ## Deuda técnica
 
