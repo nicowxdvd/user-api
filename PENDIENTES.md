@@ -19,7 +19,7 @@ Verificado sobre `develop` el 2026-09-12.
 
 - [x] `findOne` devuelve `null` en vez de lanzar `NotFoundException`: un id inexistente
   responde 200 con cuerpo vacío. (`users.service.ts:62`)
-- [ ] `update` no verifica que el usuario exista: un id inexistente responde 200 con
+- [x] `update` no verifica que el usuario exista: un id inexistente responde 200 con
   cuerpo vacío, igual que `findOne`. Los errores del driver ya no son problema suyo,
   los traduce `QueryFailedFilter`. (`users.service.ts:66`)
 - [ ] No hay forma de activar ni desactivar un usuario desde la API: ningún DTO declara
