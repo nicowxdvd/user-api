@@ -19,7 +19,7 @@ npm run test:e2e           # test/jest-e2e.json (rootDir=test)
 
 ## Arquitectura
 
-NestJS 11 + TypeORM + MySQL. Cuatro módulos de funcionalidad (`users`, `roles`, `auth`, `user-profiles`) más `common/` para decoradores transversales.
+NestJS 11 + TypeORM + MySQL. Cuatro módulos de funcionalidad (`users`, `roles`, `auth`, `user-profiles`) más `common/` para lo transversal: `common/decorators/` y `common/filters/`.
 
 ### Abstracción de repositorios (la convención principal)
 
@@ -61,7 +61,16 @@ La forma de las consultas (`relations`, `select`, `where`) vive en el repositori
 
 Las propiedades de las entidades están en camelCase y las columnas en snake_case mediante `name:` explícito (`firstName` → `first_name`). `User.roleId` es una FK `int` —del mismo tipo que `roles.id`, como exige MySQL— con un `@ManyToOne` a `Role` unido por `role_id`. `User.isActive` y `Role.isActive` se declaran ambos `{ type: 'boolean' }`, que en MySQL produce `tinyint`; declararlos así es lo que hace que TypeORM hidrate un booleano real y no el `'1'` en texto. Ambas columnas tuvieron tipos equivocados y se corrigieron en `4a0516d` y `b710f97`; el trabajo que queda sobre el esquema está en `PENDIENTES.md`.
 
-Los errores del driver de MySQL se traducen a excepciones HTTP dentro de los servicios inspeccionando `error.code` / `error.errno`: `ER_DUP_ENTRY`/1062 → `ConflictException`, `ER_ROW_IS_REFERENCED_2`/1451 → `ConflictException`. Sigue ese patrón en lugar de dejar escapar los errores del driver.
+Los errores del driver de MySQL **no** se capturan en los servicios. Los traduce un exception filter, `common/filters/query-failed.filter.ts`, que hace `@Catch(QueryFailedError)` y mapea el `errno`: 1062 → `ConflictException`, 1451 → `ConflictException`, 1452 → `ConflictException`, y cualquier otro → `InternalServerErrorException` dejando el error en el log. TypeORM copia las propiedades del error del driver sobre la excepción, así que `errno` se lee directo de ella.
+
+El filtro se registra dos veces, a propósito:
+
+- Global en `AppModule` con `{ provide: APP_FILTER, useValue: new QueryFailedFilter() }`, como red de seguridad con mensajes genéricos. Va con `useValue` y no con `useClass` porque el constructor recibe un objeto de mensajes que Nest no sabe inyectar.
+- Por controlador con `@UseFilters(new QueryFailedFilter({ duplicado: ..., referenciado: ..., referenciaInvalida: ... }))`, que es donde vive el texto en español de cada recurso. Nest resuelve método → controlador → global y se queda con el primero que haga match, así que el del controlador gana. Las claves describen la situación de negocio, no el código de MySQL.
+
+Por eso los servicios ya no llevan `try/catch` alrededor de las escrituras, ni el `if (error instanceof NotFoundException) throw error` que hacía falta para que el `catch` no se tragara las excepciones propias. Un servicio solo lanza lo suyo (`NotFoundException`, `ConflictException` de un pre-chequeo). Al agregar un recurso, sigue este esquema en lugar de reintroducir el `try/catch`.
+
+Ojo con una consecuencia: si el servicio verifica antes de escribir —`UsersService.create` hace `findByEmail`, `UserProfilesService.create` hace `findByUserId`— gana ese pre-chequeo y el filtro nunca ve el 1062. El filtro cubre la carrera entre la verificación y el insert, no el caso normal. Por eso `POST /users` con correo repetido responde `El correo ya esta registrado.` y no el mensaje del filtro.
 
 ## Estado de los tests
 
