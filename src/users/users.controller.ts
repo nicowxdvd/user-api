@@ -13,13 +13,15 @@ import {
   Put,
   ParseBoolPipe,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { Public } from '../common/decorators/public.decorator';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { Request } from 'express';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -46,8 +48,9 @@ export class UsersController {
   // orden de declaración, y si ':id' fuera primero capturaría la palabra 'me'
   // como si fuese un identificador.
   @Get('me')
-  findMe(@CurrentUser('sub') id: string) {
-    return this.usersService.findMe(id);
+  findMe(@Req() request: Request) {
+    const { sub } = request['user'] as JwtPayload;
+    return this.usersService.findMe(sub);
   }
 
   @Get(':id')
