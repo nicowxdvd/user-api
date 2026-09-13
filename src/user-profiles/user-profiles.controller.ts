@@ -1,10 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query, ParseIntPipe, UseGuards, UseInterceptors, ClassSerializerInterceptor, UseFilters } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserProfilesService } from './user-profiles.service';
 import { CreateUserProfileDto } from './dto/create-user-profile.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { QueryFailedFilter } from '../common/filters/query-failed.filter';
 
+@ApiTags('user-profiles')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new QueryFailedFilter({ duplicado: 'El usuario ya tiene un perfil registrado', referenciado: 'No se puede eliminar el perfil porque tiene registros asociados' }))
