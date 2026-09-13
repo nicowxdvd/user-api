@@ -1,6 +1,7 @@
+---
 name: code-style
 description: Formatea código TypeScript/NestJS manteniendo alineación tabular, objetos en una sola línea y la máxima densidad horizontal posible.
--------------------------------------------------------------------------------------------------------------------------------------------------
+---
 
 # Code Style
 
@@ -90,20 +91,24 @@ return { access_token: this.jwtService.sign(payload) };
 return this.userService.create({ name, email, password });
 ```
 
-### 4. Control de flujo compacto
+### 4. Control de flujo con `if` de una sola instrucción
 
-Mantén las instrucciones simples dentro de `if`, `else`, `catch` y bloques similares en una sola línea cuando sea posible.
+Cuando el `if` tenga una única instrucción en el cuerpo (por ejemplo, un `throw`), escribe la condición en su propia línea y la instrucción indentada en la línea siguiente, sin llaves.
 
 **Correcto:**
 
 ```typescript
-if (!user) throw new NotFoundException('Usuario no encontrado');
-if (!token) throw new UnauthorizedException('Token inválido');
+if (!user)
+  throw new NotFoundException('Usuario no encontrado');
+if (!token)
+  throw new UnauthorizedException('Token inválido');
 ```
 
-Evita expandir innecesariamente instrucciones simples.
-
 **Incorrecto:**
+
+```typescript
+if (!user) throw new NotFoundException('Usuario no encontrado');
+```
 
 ```typescript
 if (!user) {
@@ -111,7 +116,7 @@ if (!user) {
 }
 ```
 
-Cuando el bloque contenga varias instrucciones o su expansión mejore significativamente la legibilidad, utiliza bloques normales.
+Cuando el bloque contenga varias instrucciones o su expansión mejore significativamente la legibilidad, utiliza bloques normales con llaves.
 
 ### 5. Excepciones compactas
 
@@ -281,6 +286,29 @@ No ejecutes automáticamente una reformateación que destruya:
 * Alineación tabular.
 * Espaciado vertical definido por esta skill.
 
+### 13. Sin comentarios docstring
+
+No agregues ni conserves comentarios de documentación tipo JSDoc (`/** ... */`) sobre métodos, funciones o clases. Si el archivo ya tiene uno, elimínalo al tocarlo.
+
+**Incorrecto:**
+
+```typescript
+/**
+ * Devuelve el usuario dueño del token.
+ */
+async findMe(id: string) {
+  ...
+}
+```
+
+**Correcto:**
+
+```typescript
+async findMe(id: string) {
+  ...
+}
+```
+
 ## Regla general
 
 Antes de entregar o modificar código TypeScript/NestJS, verifica:
@@ -290,7 +318,8 @@ Antes de entregar o modificar código TypeScript/NestJS, verifica:
 * [ ] Objetos pequeños y medianos en una sola línea.
 * [ ] Retornos de objetos en una sola línea.
 * [ ] Excepciones simples en una sola línea.
-* [ ] `if` simples en una sola línea.
+* [ ] `if` de una sola instrucción con la condición en su propia línea y la instrucción indentada debajo, sin llaves.
+* [ ] No hay comentarios docstring (JSDoc) sobre métodos, funciones o clases.
 * [ ] Firmas compactas.
 * [ ] Argumentos compactos.
 * [ ] Métodos separados con exactamente tres saltos de línea.

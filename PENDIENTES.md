@@ -56,6 +56,20 @@ Verificado sobre `develop` el 2026-09-12.
 - [ ] `main.ts` ignora la variable `PORT` y hace `app.listen(3001)` fijo. Cuidado al
   corregirlo: el puerto 3000 que declara `.env` lo ocupa un Next.js en esta máquina.
 
+## Funcionalidad nueva
+
+- [ ] `POST /users` no manda correo de bienvenida al crear la cuenta. Acordado hasta
+  ahora: emitirlo recién después del `await this.userRepository.save(...)` en
+  `UsersService.create` (nunca antes, para no notificar un registro que todavía puede
+  fallar), desacoplado del request con `@nestjs/event-emitter` en vez de una llamada
+  directa a un `MailService` dentro del propio `create`. La plantilla arranca como un
+  template literal simple (un solo correo, el de bienvenida); migrar a un motor tipo
+  Handlebars (`@nestjs-modules/mailer`) solo si aparece un segundo o tercer correo.
+  Pendiente de decidir si el registro masivo es un escenario real: si lo es, el
+  `EventEmitter2` no alcanza (sin persistencia, sin backpressure, sin reintentos) y
+  hay que pasar a una cola (`@nestjs/bull`/`@nestjs/bullmq` con Redis), que agrega
+  Redis como infraestructura nueva al proyecto. Revisar al final.
+
 ## Deuda técnica
 
 - [ ] 4 de 10 suites fallan: `users.service`, `users.controller`, `roles.service` y

@@ -13,12 +13,13 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto) {
     const { email, password, firstName, lastName } = createUserDto;
+    const existingUser                             = await this.userRepository.findByEmail(email);
 
-    const existingUser = await this.userRepository.findByEmail(email);
-    if (existingUser) throw new ConflictException('El correo ya esta registrado.');
+    if (existingUser) 
+      throw new ConflictException('El correo ya esta registrado.');
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.userRepository.save({ email, password: hashedPassword, firstName, lastName, roleId: ROL_POR_DEFECTO_ID });
+    const hashedPassword  = await bcrypt.hash(password, 10);
+    const user            = await this.userRepository.save({ email, password: hashedPassword, firstName, lastName, roleId: ROL_POR_DEFECTO_ID });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
 
@@ -27,10 +28,7 @@ export class UsersService {
   }
 
 
-  /**
-   * Devuelve el usuario dueño del token. El id sale del payload, nunca del
-   * cliente, así que no hay forma de pedir la ficha de otra persona.
-   */
+
   async findMe(id: string) {
     const user = await this.userRepository.findById(id);
     if (!user) throw new NotFoundException('El usuario del token ya no existe');
@@ -53,7 +51,8 @@ export class UsersService {
 
 
   update(id: string, updateUserDto: UpdateUserDto) {
-    if (Object.keys(updateUserDto).length === 0) throw new BadRequestException('Debe enviar al menos un campo para actualizar');
+    if (Object.keys(updateUserDto).length === 0) 
+      throw new BadRequestException('Debe enviar al menos un campo para actualizar');
 
     return this.userRepository.update(id, updateUserDto);
 
@@ -62,7 +61,8 @@ export class UsersService {
 
   async remove(id: string): Promise<{ message: string }> {
     const result = await this.userRepository.delete(id);
-    if (!result.affected) throw new NotFoundException(`El usuario con ID ${id} no existe`);
+    if (!result.affected) 
+      throw new NotFoundException(`El usuario con ID ${id} no existe`);
 
     return { message: `Usuario con ID ${id} eliminado exitosamente` };
 
