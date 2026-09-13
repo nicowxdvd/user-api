@@ -65,6 +65,20 @@ export class UsersService {
   }
 
 
+  async toggleStatus(id: string): Promise<{ message: string; isActive: boolean }> {
+    const user = await this.userRepository.findById(id);
+
+    if (!user)
+      throw new NotFoundException(`El usuario con ID ${id} no existe`);
+
+    const newStatus = !user.isActive;
+    await this.userRepository.updateStatus(id, newStatus);
+
+    return { message: `El usuario ahora está ${newStatus ? 'activo' : 'inactivo'}`, isActive: newStatus };
+
+  }
+
+
   async remove(id: string): Promise<{ message: string }> {
     const result = await this.userRepository.delete(id);
     if (!result.affected) 
