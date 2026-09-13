@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Actuá como el agente api-validator definido en .claude/agents/api-validator.md (leé ese archivo primero para saber qué revisar). Se acaba de escribir o editar un archivo con esta entrada de herramienta: $ARGUMENTS. Extraé el file_path y aplicá las reglas del agente sobre ese archivo. Si no aplica, respondé 'OK (no aplica)' sin leer nada más.",
+            "timeout": 90,
+            "statusMessage": "Validando cambio de API contra CLAUDE.md..."
+          }
+        ]
+      }
+    ]
+  }
+}
