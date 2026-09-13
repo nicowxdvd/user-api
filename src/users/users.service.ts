@@ -3,7 +3,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { USER_REPOSITORY_TOKEN, type IUserRepository } from './interface/user-repository.interface';
-const ROL_POR_DEFECTO_ID = 11;
 
 @Injectable()
 export class UsersService {
@@ -19,7 +18,7 @@ export class UsersService {
       throw new ConflictException('El correo ya esta registrado.');
 
     const hashedPassword  = await bcrypt.hash(password, 10);
-    const user            = await this.userRepository.save({ email, password: hashedPassword, firstName, lastName, roleId: ROL_POR_DEFECTO_ID });
+    const user            = await this.userRepository.save({ email, password: hashedPassword, firstName, lastName });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
 
