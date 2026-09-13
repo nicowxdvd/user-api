@@ -29,10 +29,6 @@ export class PermissionsGuard implements CanActivate {
     if (!faltantes.length)
       return true;
 
-    // Arranque en frío: mientras un permiso nunca se le asignó a ningún rol, el gate
-    // queda abierto para que alguien pueda crearlo y otorgárselo a sí mismo. Apenas
-    // ese permiso se asigna a un rol por primera vez, la puerta se cierra para siempre
-    // salvo quien lo tenga.
     const yaConfigurados = await Promise.all(faltantes.map((permission) => this.permissionRepository.isAssignedToAnyRole(permission)));
 
     if (yaConfigurados.some(Boolean))

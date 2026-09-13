@@ -2,6 +2,16 @@
 
 Lista de trabajo pendiente para este repo.
 
+## Permisos y Autorización
+
+- [ ] Explorar implementación de rol **superuser** y permisos comodín. Actualmente los
+  permisos se declaran en decoradores (`@RequirePermissions('users:list')`), lo que ata
+  cambios a releases. Diseñar cómo un rol SUPERUSER con permiso `*` (wildcard) saltaría
+  todas las validaciones de PermissionsGuard. Considerar si es mejor:
+  - Agregar lógica en `PermissionsGuard.canActivate()` para detectar `*` o `SUPERUSER`
+  - O asignar en la DB todos los permisos específicos al rol SUPERUSER (menos escalable)
+  - Futuro: permisos dinámicos en config/DB en lugar de decoradores.
+
 ## Funcionalidad nueva
 
 - [ ] `POST /auth/forgot-password` + `POST /auth/reset-password`: recuperación de
@@ -54,6 +64,29 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
   campañas), `EventEmitter2` no alcanza (sin persistencia ni reintentos). Se resuelve
   cambiando el listener por un consumer de cola (`@nestjs/bullmq` + Redis) sin tocar el
   punto donde se emite el evento.
+
+## Limpieza técnica
+
+- [ ] Eliminar `@UseInterceptors(ClassSerializerInterceptor)` de `UsersController`. Es
+  redundante: los métodos ya usan `select: false` en TypeORM (password nunca se trae de la
+  DB) y `create()` elimina manualmente el password. El interceptor + `@Exclude()` es defensa
+  en profundidad innecesaria que suma ruido visual. Retirar el decorador a nivel clase,
+  quitar `@Exclude()` de la entidad `User`, y el `import` de `ClassSerializerInterceptor`
+  del controlador.
+
+- [ ] Simplificar `QueryFailedFilter`: hardcodear los mensajes dentro del método
+  `traducir()` (no como parámetro del constructor). Registrar global en `main.ts` con
+  `app.useGlobalFilters(new QueryFailedFilter())` sin necesidad de decoradores. Eliminar
+  todos los `@UseFilters(new QueryFailedFilter({ ... }))` de los controladores. Los
+  mensajes son estáticos (no cambian en tiempo de ejecución), así que una fuente de verdad
+  en `traducir()` es suficiente. Si hay que cambiar un mensaje, se edita el filtro.
+
+- [ ] Validación consistente de IDs: `DELETE /users/:id` usa `ParseUUIDPipe` pero
+  `GET /users/:id`, `PATCH /users/:id` y `PUT /users/:id` reciben el id sin validar.
+  Crear un pipe reutilizable como propiedad de clase en el controlador y aplicarlo a
+  todos los métodos con parámetro `:id` (GET, PATCH, PUT, DELETE). Mismo en otros
+  controladores (`roles`, `user-profiles`). Asegura formato UUID válido en todas las
+  rutas antes de llegar al servicio.
 
 ## Nota sobre el esquema
 
