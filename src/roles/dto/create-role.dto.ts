@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsNotEmpty,
-  MinLength,
-  MaxLength,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, MaxLength, IsOptional } from 'class-validator';
 
 export class CreateRoleDto {
   @IsString({ message: 'El role debe ser un texto' })
@@ -15,8 +9,6 @@ export class CreateRoleDto {
 
   @IsOptional()
   @IsString({ message: 'La descripción debe ser un texto' })
-  @MaxLength(255, {
-    message: 'La descripción no debe superar los 255 caracteres',
-  })
+  @MaxLength(255, { message: 'La descripción no debe superar los 255 caracteres' })
   description = '';
 }

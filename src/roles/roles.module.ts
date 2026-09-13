@@ -6,15 +6,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
 import { ROLE_REPOSITORY_TOKEN } from './interfaces/role-repository.interface';
 import { RoleRepository } from './repositories/role.repository';
-@Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([Role])],
-  controllers: [RolesController],
-  providers: [
-    RolesService,
-    {
-      provide: ROLE_REPOSITORY_TOKEN,
-      useClass: RoleRepository,
-    },
-  ],
-})
+
+@Module({ imports: [AuthModule, TypeOrmModule.forFeature([Role])], controllers: [RolesController], providers: [RolesService, { provide: ROLE_REPOSITORY_TOKEN, useClass: RoleRepository }] })
 export class RolesModule {}
