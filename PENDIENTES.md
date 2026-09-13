@@ -2,16 +2,6 @@
 
 Lista de trabajo pendiente para este repo.
 
-## Permisos y Autorización
-
-- [ ] Explorar implementación de rol **superuser** y permisos comodín. Actualmente los
-  permisos se declaran en decoradores (`@RequirePermissions('users:list')`), lo que ata
-  cambios a releases. Diseñar cómo un rol SUPERUSER con permiso `*` (wildcard) saltaría
-  todas las validaciones de PermissionsGuard. Considerar si es mejor:
-  - Agregar lógica en `PermissionsGuard.canActivate()` para detectar `*` o `SUPERUSER`
-  - O asignar en la DB todos los permisos específicos al rol SUPERUSER (menos escalable)
-  - Futuro: permisos dinámicos en config/DB en lugar de decoradores.
-
 ## Funcionalidad nueva
 
 - [ ] `POST /auth/forgot-password` + `POST /auth/reset-password`: recuperación de
@@ -87,6 +77,16 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
   todos los métodos con parámetro `:id` (GET, PATCH, PUT, DELETE). Mismo en otros
   controladores (`roles`, `user-profiles`). Asegura formato UUID válido en todas las
   rutas antes de llegar al servicio.
+
+  ## Permisos y Autorización
+
+- [ ] Explorar implementación de rol **superuser** y permisos comodín. Actualmente los
+  permisos se declaran en decoradores (`@RequirePermissions('users:list')`), lo que ata
+  cambios a releases. Diseñar cómo un rol SUPERUSER con permiso `*` (wildcard) saltaría
+  todas las validaciones de PermissionsGuard. Considerar si es mejor:
+  - Agregar lógica en `PermissionsGuard.canActivate()` para detectar `*` o `SUPERUSER`
+  - O asignar en la DB todos los permisos específicos al rol SUPERUSER (menos escalable)
+  - Futuro: permisos dinámicos en config/DB en lugar de decoradores.
 
 ## Nota sobre el esquema
 
