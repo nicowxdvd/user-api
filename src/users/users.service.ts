@@ -53,11 +53,14 @@ export class UsersService {
   }
 
 
-  update(id: string, updateUserDto: UpdateUserDto) {
-    if (Object.keys(updateUserDto).length === 0) 
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    if (Object.keys(updateUserDto).length === 0)
       throw new BadRequestException('Debe enviar al menos un campo para actualizar');
 
-    return this.userRepository.update(id, updateUserDto);
+    const user = await this.userRepository.update(id, updateUserDto);
+    if (!user) throw new NotFoundException(`El usuario con ID ${id} no existe`);
+
+    return user;
 
   }
 
