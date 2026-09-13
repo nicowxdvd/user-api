@@ -44,9 +44,19 @@ Verificado sobre `develop` el 2026-09-12.
 - [ ] El id del rol por defecto está cableado: `ROL_POR_DEFECTO_ID = 11` en
   `users.service.ts`. En otra base ese id es otro rol, y si no existe, el insert falla
   con errno 1452; desde que existe `QueryFailedFilter` el cliente recibe un 409 con
-  «El rol indicado no existe» en vez de un 500, pero el id sigue cableado. Lo acordado es mover el
-  valor por omisión al `@Column` de `User.roleId`, porque con `synchronize: true` un
-  `DEFAULT` puesto a mano con `ALTER TABLE` no sobrevive al siguiente arranque.
+  «El rol indicado no existe» en vez de un 500, pero el id sigue cableado. Lo acordado
+  es mover el valor por omisión al `@Column` de `User.roleId`, porque con
+  `synchronize: true` un `DEFAULT` puesto a mano con `ALTER TABLE` no sobrevive al
+  siguiente arranque.
+- [ ] `POST /roles` perdió el nombre del rol en el mensaje de conflicto. Antes decía
+  `El rol 'ADMIN' ya existe.`, interpolando el dato de la request; ahora responde
+  `Ya existe un rol con ese nombre`, porque el mensaje lo fija `QueryFailedFilter` a
+  nivel de controlador y un filtro no ve el DTO. Se descartó recuperar el nombre
+  leyendo el `sqlMessage` de MySQL, que ataría el código al texto de error del driver.
+  La salida limpia es un pre-chequeo `findByName` en `RolesService.create`, como el
+  `findByEmail` que ya hace `UsersService.create`; exige sumar `findByName` a
+  `IRoleRepository` y su implementación. Decidir si el nombre en el mensaje justifica
+  el viaje extra a la base. (`roles.controller.ts`, `roles.service.ts`)
 - [ ] `first_name` y `last_name` admiten NULL en la base, pero `CreateUserDto` los
   exige con `MinLength(3)` y las propiedades de la entidad están tipadas distinto entre
   sí (`string = ''` frente a `string | undefined`). Decidir si son obligatorios y dejar
