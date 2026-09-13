@@ -61,6 +61,13 @@ export class UsersController {
   }
 
 
+  @Patch(':id/status')
+  toggleStatus(@Param('id') id: string) {
+    return this.usersService.toggleStatus(id);
+
+  }
+
+
   @Delete(':id')
   remove(@Param('id', new ParseUUIDPipe({ exceptionFactory: () => new BadRequestException('El id del usuario debe ser un UUID válido') })) id: string) {
     return this.usersService.remove(id);

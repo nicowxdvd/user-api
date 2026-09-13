@@ -47,6 +47,12 @@ export class UserRepository implements IUserRepository {
   }
 
 
+  async updateStatus(id: string, isActive: boolean): Promise<{ affected?: number | null }> {
+    return await this.typeormRepo.update(id, { isActive });
+
+  }
+
+
   async delete(id: string): Promise<DeleteResult> {
     return await this.typeormRepo.delete(id);
 

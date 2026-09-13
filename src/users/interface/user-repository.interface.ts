@@ -8,6 +8,7 @@ export interface IUserRepository {
   findByEmail(email: string)              : Promise<User | null>;
   save(user: Partial<User>)               : Promise<User>;
   update(id: string, user: Partial<User>) : Promise<User | null>;
+  updateStatus(id: string, isActive: boolean): Promise<{ affected?: number | null }>;
   delete(id: string)                      : Promise<DeleteResult>;
 
 }
