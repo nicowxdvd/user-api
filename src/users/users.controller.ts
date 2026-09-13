@@ -19,6 +19,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -39,6 +40,14 @@ export class UsersController {
     roleActive?: boolean,
   ) {
     return this.usersService.findAll(roleActive);
+  }
+
+  // 'me' se declara antes de ':id' a propósito: Nest resuelve las rutas por
+  // orden de declaración, y si ':id' fuera primero capturaría la palabra 'me'
+  // como si fuese un identificador.
+  @Get('me')
+  findMe(@CurrentUser('sub') id: string) {
+    return this.usersService.findMe(id);
   }
 
   @Get(':id')

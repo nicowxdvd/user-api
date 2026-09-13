@@ -1,8 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import { plainToInstance } from 'class-transformer';
+import { UserResponseDto } from './dto/user-response.dto';
 import {
   USER_REPOSITORY_TOKEN,
   type IUserRepository,
@@ -44,6 +51,22 @@ export class UsersService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Devuelve el usuario dueño del token. El id sale del payload, nunca del
+   * cliente, así que no hay forma de pedir la ficha de otra persona.
+   */
+  async findMe(id: string) {
+    const user = await this.userRepository.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('El usuario del token ya no existe');
+    }
+
+    return plainToInstance(UserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
 
   findAll(roleActive?: boolean) {
