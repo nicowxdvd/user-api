@@ -16,6 +16,11 @@ Lista de trabajo pendiente para este repo.
   no sirvan de enumeración de cuentas. Falta agregar rate limit (`@nestjs/throttler`) en
   `/forgot-password` antes de exponerlo.
 
+  **Modo de trabajo (acordado 2026-09-13): esta tarea la programa el usuario, no Claude.**
+  Claude guía paso a paso: indica qué archivo crear, qué método agregar, qué línea o
+  validación implementar, uno a la vez, y el usuario escribe el código y pregunta. Claude
+  no debe adelantarse a escribir la implementación completa.
+
 - [ ] Correos transaccionales: bienvenida al registrarse (`POST /users`), el de
   recuperación de contraseña de arriba, y aviso cuando cambia el correo o la contraseña de
   la cuenta (`PATCH`/`PUT /users/:id` con `email` nuevo, y el futuro `reset-password`).
