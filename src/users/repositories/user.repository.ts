@@ -6,51 +6,44 @@ import { IUserRepository } from '../interface/user-repository.interface';
 
 @Injectable()
 export class UserRepository implements IUserRepository {
-  constructor(
-    @InjectRepository(User)
-    private readonly typeormRepo: Repository<User>,
-  ) {}
+
+  constructor(@InjectRepository(User) private readonly typeormRepo: Repository<User>) {}
+
 
   async findAll(roleActive?: boolean): Promise<User[]> {
-    return await this.typeormRepo.find({
-      relations: {
-        role: true,
-      },
-      where: roleActive !== undefined ? { role: { isActive: roleActive } } : {},
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        roleId: true,
-        createdAt: true,
-        updatedAt: true,
-        role: {
-          id: true,
-          name: true,
-        },
-      },
-    });
+    return await this.typeormRepo.find({ relations: { role: true }, where: roleActive !== undefined ? { role: { isActive: roleActive } } : {}, select: { id: true, firstName: true, lastName: true, isActive: true, roleId: true, createdAt: true, updatedAt: true, role: { id: true, name: true } } });
+
   }
+
 
   async findById(id: string): Promise<User | null> {
     return await this.typeormRepo.findOneBy({ id });
+
   }
+
 
   async findByEmail(email: string): Promise<User | null> {
     return await this.typeormRepo.findOneBy({ email });
+
   }
+
 
   async save(user: Partial<User>): Promise<User> {
     return await this.typeormRepo.save(user);
+
   }
+
 
   async update(id: string, user: Partial<User>): Promise<User | null> {
     await this.typeormRepo.update(id, user);
     return await this.typeormRepo.findOneBy({ id });
+
   }
+
 
   async delete(id: string): Promise<DeleteResult> {
     return await this.typeormRepo.delete(id);
+
   }
+
 }
