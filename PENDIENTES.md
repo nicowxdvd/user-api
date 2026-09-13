@@ -17,13 +17,6 @@ Verificado sobre `develop` el 2026-09-12.
 
 ## Funcionalidad rota
 
-- [ ] Borrar un usuario deja huérfano su perfil. `user_profiles.user_id` es un `varchar`
-  suelto: la entidad no declara `@ManyToOne` hacia `User` y la base tampoco tiene la
-  foreign key —la única que existe es `users.role_id → roles`—, así que nada impide que
-  quede una fila apuntando a un usuario que ya no está. Decidir entre declarar la
-  relación con `onDelete: 'CASCADE'` o borrar el perfil junto con el usuario dentro de
-  una transacción. Mientras esa FK no exista, el errno 1451 que traduce
-  `QueryFailedFilter` no se dispara nunca para este caso.
 - [ ] `findOne` devuelve `null` en vez de lanzar `NotFoundException`: un id inexistente
   responde 200 con cuerpo vacío. (`users.service.ts:62`)
 - [ ] `update` no verifica que el usuario exista: un id inexistente responde 200 con
