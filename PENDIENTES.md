@@ -8,12 +8,12 @@ Verificado sobre `develop` el 2026-09-12.
 
 ## Seguridad
 
-- [ ] `GET /users` devuelve el directorio completo a cualquier cuenta con token, y el
-  registro es público: crear una cuenta descartable alcanza para volcar el correo,
-  nombre, rol y fechas de todos los usuarios. Ya no hay autorización por rol, así que
-  hay que resolverlo por otra vía: recortar lo que devuelve `findAll`, restringir a
-  que cada quien lea lo suyo, o cerrar el registro público. Las dos últimas son
-  decisiones de producto. (`users.controller.ts:36`)
+- [ ] `GET /users` sigue listando a todos los usuarios para cualquier cuenta con token,
+  y el registro es público: crear una cuenta descartable alcanza para obtener la lista
+  completa de nombres. El correo ya no se expone —se quitó del `select` de `findAll`—,
+  así que lo que queda es una decisión de producto: cerrar el registro público, o
+  reintroducir autorización por rol. Para el caso de uso habitual, que cada cuenta lea
+  sus propios datos, ya está `GET /users/me`. (`users.controller.ts:50`)
 
 ## Funcionalidad rota
 
@@ -22,16 +22,18 @@ Verificado sobre `develop` el 2026-09-12.
   `transform: true` llegan como cadena vacía, así que `@IsNotEmpty` dispara aunque el
   campo no se haya enviado. Se arregla quitando los inicializadores y declarando las
   propiedades con `!` o como opcionales. (`create-user.dto.ts`)
-- [ ] `DELETE /users/:id` no borra nada y responde como si hubiera funcionado.
-  `UsersService.remove` devuelve el literal `This action removes a #${id} user`,
-  además en inglés; `IUserRepository` no declara método de borrado; y el parámetro usa
-  `ParseIntPipe` cuando el id es un UUID. Contemplar errno 1451 si el usuario tiene
-  registros asociados. `IUserProfileRepository.delete` es la referencia de forma.
-  (`users.service.ts:61`, `users.controller.ts:59`)
+- [ ] Borrar un usuario deja huérfano su perfil. `user_profiles.user_id` es un `varchar`
+  suelto: la entidad no declara `@ManyToOne` hacia `User` y la base tampoco tiene la
+  foreign key —la única que existe es `users.role_id → roles`—, así que nada impide que
+  quede una fila apuntando a un usuario que ya no está. Decidir entre declarar la
+  relación con `onDelete: 'CASCADE'` o borrar el perfil junto con el usuario dentro de
+  una transacción. Mientras esa FK no exista, el errno 1451 que traduce
+  `QueryFailedFilter` no se dispara nunca para este caso.
 - [ ] `findOne` devuelve `null` en vez de lanzar `NotFoundException`: un id inexistente
-  responde 200 con cuerpo vacío. (`users.service.ts:53`)
-- [ ] `update` no verifica que el usuario exista ni traduce los errores del driver.
-  (`users.service.ts:57`)
+  responde 200 con cuerpo vacío. (`users.service.ts:62`)
+- [ ] `update` no verifica que el usuario exista: un id inexistente responde 200 con
+  cuerpo vacío, igual que `findOne`. Los errores del driver ya no son problema suyo,
+  los traduce `QueryFailedFilter`. (`users.service.ts:66`)
 - [ ] No hay forma de activar ni desactivar un usuario desde la API: ningún DTO declara
   `isActive`, así que la columna nunca se escribe y todas las filas conservan el valor
   por omisión. Decidir si va en el DTO de actualización o en un endpoint de cambio de
@@ -41,9 +43,20 @@ Verificado sobre `develop` el 2026-09-12.
 
 - [ ] El id del rol por defecto está cableado: `ROL_POR_DEFECTO_ID = 11` en
   `users.service.ts`. En otra base ese id es otro rol, y si no existe, el insert falla
-  con errno 1452, que nadie traduce y el cliente recibe 500. Lo acordado es mover el
-  valor por omisión al `@Column` de `User.roleId`, porque con `synchronize: true` un
-  `DEFAULT` puesto a mano con `ALTER TABLE` no sobrevive al siguiente arranque.
+  con errno 1452; desde que existe `QueryFailedFilter` el cliente recibe un 409 con
+  «El rol indicado no existe» en vez de un 500, pero el id sigue cableado. Lo acordado
+  es mover el valor por omisión al `@Column` de `User.roleId`, porque con
+  `synchronize: true` un `DEFAULT` puesto a mano con `ALTER TABLE` no sobrevive al
+  siguiente arranque.
+- [ ] `POST /roles` perdió el nombre del rol en el mensaje de conflicto. Antes decía
+  `El rol 'ADMIN' ya existe.`, interpolando el dato de la request; ahora responde
+  `Ya existe un rol con ese nombre`, porque el mensaje lo fija `QueryFailedFilter` a
+  nivel de controlador y un filtro no ve el DTO. Se descartó recuperar el nombre
+  leyendo el `sqlMessage` de MySQL, que ataría el código al texto de error del driver.
+  La salida limpia es un pre-chequeo `findByName` en `RolesService.create`, como el
+  `findByEmail` que ya hace `UsersService.create`; exige sumar `findByName` a
+  `IRoleRepository` y su implementación. Decidir si el nombre en el mensaje justifica
+  el viaje extra a la base. (`roles.controller.ts`, `roles.service.ts`)
 - [ ] `first_name` y `last_name` admiten NULL en la base, pero `CreateUserDto` los
   exige con `MinLength(3)` y las propiedades de la entidad están tipadas distinto entre
   sí (`string = ''` frente a `string | undefined`). Decidir si son obligatorios y dejar
@@ -65,14 +78,10 @@ Verificado sobre `develop` el 2026-09-12.
 - [ ] `auth.guard.spec.ts` hace `new AuthGuard()` pero el constructor pide dos
   argumentos (`JwtService` y `Reflector`). `npm run build` no lo detecta porque
   `tsconfig.build.json` excluye los specs.
-- [ ] 6 errores de lint en `user-profiles.service.ts` (líneas 28, 79 y 99), por el
-  acceso a `error.code` y `error.errno`. Le falta el `eslint-disable` de cabecera que
-  sí tienen `users.service.ts` y `roles.service.ts`. Son los únicos errores del
-  proyecto.
-- [ ] 3 advertencias de lint: dos directivas `eslint-disable` sin uso en
-  `users.service.ts` (líneas 1 y 28) y una promesa sin await en `main.ts:18`.
-- [ ] `npx prettier --check src/` falla en 45 archivos. Mientras siga así, el formato no
-  sirve como señal en las revisiones.
+- [ ] 1 advertencia de lint: una promesa sin await en `main.ts:18`. Es lo único que
+  queda; los 6 errores por acceso a `error.code`/`error.errno` en
+  `user-profiles.service.ts` y las directivas `eslint-disable` sin uso de
+  `users.service.ts` desaparecieron al quitar los `try/catch` que los motivaban.
 - [ ] Archivos de herramientas versionados: `.claude/.headroom_wrap_marker.json`,
   `.serena/project.yml` y `.serena/.gitignore`. El primero solo guarda un PID que
   cambia en cada sesión, así que ensucia `git status` de forma permanente. Van al
