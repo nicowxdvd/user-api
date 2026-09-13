@@ -14,10 +14,10 @@ export class User {
   @Exclude()
   password: string | undefined;
 
-  @Column({ type: 'varchar', name: 'first_name', nullable: true })
-  firstName: string = '';
+  @Column({ type: 'varchar', name: 'first_name' })
+  firstName: string | undefined;
 
-  @Column({ type: 'varchar', name: 'last_name', nullable: true })
+  @Column({ type: 'varchar', name: 'last_name' })
   lastName: string | undefined;
 
   @Column({ type: 'boolean', name: 'is_active', default: true })
