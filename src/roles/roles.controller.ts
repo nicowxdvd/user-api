@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, ClassSerializerInterceptor, UseInterceptors, Query, ParseBoolPipe, Patch, ParseIntPipe, UseFilters } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRolePermissionsDto } from './dto/update-role-permissions.dto';
@@ -7,6 +8,8 @@ import { PermissionsGuard } from '../auth/permissions.guard';
 import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 import { QueryFailedFilter } from '../common/filters/query-failed.filter';
 
+@ApiTags('roles')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new QueryFailedFilter({ duplicado: 'Ya existe un rol con ese nombre', referenciado: 'No se puede eliminar el rol porque tiene usuarios asignados' }))

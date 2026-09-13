@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, BadRequestException, UseGuards, ClassSerializerInterceptor, UseInterceptors, Put, ParseBoolPipe, Query, Req, UseFilters } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -10,6 +11,8 @@ import type { Request } from 'express';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { QueryFailedFilter } from '../common/filters/query-failed.filter';
 
+@ApiTags('users')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @UseFilters(new QueryFailedFilter({ duplicado: 'El correo electrónico ya está registrado', referenciado: 'No se puede eliminar el usuario porque tiene registros asociados', referenciaInvalida: 'El rol indicado no existe' }))
