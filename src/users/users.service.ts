@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   ConflictException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -30,26 +28,17 @@ export class UsersService {
       throw new ConflictException('El correo ya esta registrado.');
     }
 
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await this.userRepository.save({
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        roleId: ROL_POR_DEFECTO_ID,
-      });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword;
-    } catch (error: any) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
-        throw new ConflictException('El correo electrónico ya está registrado');
-      }
-      throw error;
-    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await this.userRepository.save({
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+      roleId: ROL_POR_DEFECTO_ID,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   /**
@@ -79,23 +68,12 @@ export class UsersService {
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    try {
-      const result = await this.userRepository.delete(id);
-      if (!result || result.affected === 0) {
-        throw new NotFoundException(`El usuario con ID ${id} no existe`);
-      }
-      return { message: `Usuario con ID ${id} eliminado exitosamente` };
-    } catch (error: any) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (error?.errno === 1451 || error?.code === 'ER_ROW_IS_REFERENCED_2') {
-        throw new ConflictException(
-          'No se puede eliminar el usuario porque tiene registros asociados',
-        );
-      }
-      throw new InternalServerErrorException('Error al eliminar el usuario');
+    const result = await this.userRepository.delete(id);
+
+    if (!result.affected) {
+      throw new NotFoundException(`El usuario con ID ${id} no existe`);
     }
+
+    return { message: `Usuario con ID ${id} eliminado exitosamente` };
   }
 }

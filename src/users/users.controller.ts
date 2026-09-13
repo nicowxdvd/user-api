@@ -15,6 +15,7 @@ import {
   ParseBoolPipe,
   Query,
   Req,
+  UseFilters,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -23,9 +24,18 @@ import { AuthGuard } from '../auth/auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import type { Request } from 'express';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { QueryFailedFilter } from '../common/filters/query-failed.filter';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
+@UseFilters(
+  new QueryFailedFilter({
+    duplicado: 'El correo electrónico ya está registrado',
+    referenciado:
+      'No se puede eliminar el usuario porque tiene registros asociados',
+    referenciaInvalida: 'El rol indicado no existe',
+  }),
+)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

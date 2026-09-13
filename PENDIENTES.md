@@ -13,7 +13,7 @@ Verificado sobre `develop` el 2026-09-12.
   completa de nombres. El correo ya no se expone —se quitó del `select` de `findAll`—,
   así que lo que queda es una decisión de producto: cerrar el registro público, o
   reintroducir autorización por rol. Para el caso de uso habitual, que cada cuenta lea
-  sus propios datos, ya está `GET /users/me`. (`users.controller.ts:39`)
+  sus propios datos, ya está `GET /users/me`. (`users.controller.ts:50`)
 
 ## Funcionalidad rota
 
@@ -27,12 +27,13 @@ Verificado sobre `develop` el 2026-09-12.
   foreign key —la única que existe es `users.role_id → roles`—, así que nada impide que
   quede una fila apuntando a un usuario que ya no está. Decidir entre declarar la
   relación con `onDelete: 'CASCADE'` o borrar el perfil junto con el usuario dentro de
-  una transacción. Mientras esa FK no exista, el manejo del errno 1451 que ya tiene
-  `UsersService.remove` no se dispara nunca.
+  una transacción. Mientras esa FK no exista, el errno 1451 que traduce
+  `QueryFailedFilter` no se dispara nunca para este caso.
 - [ ] `findOne` devuelve `null` en vez de lanzar `NotFoundException`: un id inexistente
-  responde 200 con cuerpo vacío. (`users.service.ts:73`)
-- [ ] `update` no verifica que el usuario exista ni traduce los errores del driver.
-  (`users.service.ts:77`)
+  responde 200 con cuerpo vacío. (`users.service.ts:62`)
+- [ ] `update` no verifica que el usuario exista: un id inexistente responde 200 con
+  cuerpo vacío, igual que `findOne`. Los errores del driver ya no son problema suyo,
+  los traduce `QueryFailedFilter`. (`users.service.ts:66`)
 - [ ] No hay forma de activar ni desactivar un usuario desde la API: ningún DTO declara
   `isActive`, así que la columna nunca se escribe y todas las filas conservan el valor
   por omisión. Decidir si va en el DTO de actualización o en un endpoint de cambio de
@@ -42,7 +43,8 @@ Verificado sobre `develop` el 2026-09-12.
 
 - [ ] El id del rol por defecto está cableado: `ROL_POR_DEFECTO_ID = 11` en
   `users.service.ts`. En otra base ese id es otro rol, y si no existe, el insert falla
-  con errno 1452, que nadie traduce y el cliente recibe 500. Lo acordado es mover el
+  con errno 1452; desde que existe `QueryFailedFilter` el cliente recibe un 409 con
+  «El rol indicado no existe» en vez de un 500, pero el id sigue cableado. Lo acordado es mover el
   valor por omisión al `@Column` de `User.roleId`, porque con `synchronize: true` un
   `DEFAULT` puesto a mano con `ALTER TABLE` no sobrevive al siguiente arranque.
 - [ ] `first_name` y `last_name` admiten NULL en la base, pero `CreateUserDto` los
@@ -66,12 +68,10 @@ Verificado sobre `develop` el 2026-09-12.
 - [ ] `auth.guard.spec.ts` hace `new AuthGuard()` pero el constructor pide dos
   argumentos (`JwtService` y `Reflector`). `npm run build` no lo detecta porque
   `tsconfig.build.json` excluye los specs.
-- [ ] 6 errores de lint en `user-profiles.service.ts` (líneas 28, 79 y 99), por el
-  acceso a `error.code` y `error.errno`. Le falta el `eslint-disable` de cabecera que
-  sí tienen `users.service.ts` y `roles.service.ts`. Son los únicos errores del
-  proyecto.
-- [ ] 3 advertencias de lint: dos directivas `eslint-disable` sin uso en
-  `users.service.ts` (líneas 1 y 34) y una promesa sin await en `main.ts:18`.
+- [ ] 1 advertencia de lint: una promesa sin await en `main.ts:18`. Es lo único que
+  queda; los 6 errores por acceso a `error.code`/`error.errno` en
+  `user-profiles.service.ts` y las directivas `eslint-disable` sin uso de
+  `users.service.ts` desaparecieron al quitar los `try/catch` que los motivaban.
 - [ ] Archivos de herramientas versionados: `.claude/.headroom_wrap_marker.json`,
   `.serena/project.yml` y `.serena/.gitignore`. El primero solo guarda un PID que
   cambia en cada sesión, así que ensucia `git status` de forma permanente. Van al

@@ -12,14 +12,23 @@ import {
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
+  UseFilters,
 } from '@nestjs/common';
 import { UserProfilesService } from './user-profiles.service';
 import { CreateUserProfileDto } from './dto/create-user-profile.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { QueryFailedFilter } from '../common/filters/query-failed.filter';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
+@UseFilters(
+  new QueryFailedFilter({
+    duplicado: 'El usuario ya tiene un perfil registrado',
+    referenciado:
+      'No se puede eliminar el perfil porque tiene registros asociados',
+  }),
+)
 @Controller('user-profiles')
 export class UserProfilesController {
   constructor(private readonly userProfilesService: UserProfilesService) {}

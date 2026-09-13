@@ -1,4 +1,4 @@
-import { ConflictException,Inject,Injectable, InternalServerErrorException, NotFoundException, } from '@nestjs/common';
+import { ConflictException,Inject,Injectable, NotFoundException, } from '@nestjs/common';
 import { CreateUserProfileDto } from './dto/create-user-profile.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { UserProfile } from './entities/user-profile.entity';
@@ -22,16 +22,7 @@ export class UserProfilesService {
       throw new ConflictException('El usuario ya tiene un perfil registrado.');
     }
 
-    try {
-      return await this.userProfileRepository.save({...createUserProfileDto, countryCode: this.normalizeCountryCode(createUserProfileDto.countryCode,),});
-    } catch (error: any) {
-      if (error?.code === 'ER_DUP_ENTRY' || error?.errno === 1062) {
-        throw new ConflictException(
-          'El usuario ya tiene un perfil registrado.',
-        );
-      }
-      throw new InternalServerErrorException('Error al crear el perfil');
-    }
+    return await this.userProfileRepository.save({...createUserProfileDto, countryCode: this.normalizeCountryCode(createUserProfileDto.countryCode,),});
   }
 
 
@@ -63,44 +54,26 @@ export class UserProfilesService {
 
 
   async update(id: number, updateUserProfileDto: UpdateUserProfileDto): Promise<UserProfile> {
-    try {
-      const datosActualizados = {...updateUserProfileDto, countryCode: this.normalizeCountryCode(updateUserProfileDto.countryCode),};
-      const updated = await this.userProfileRepository.update(id, datosActualizados);
-      
-      if (!updated) {
-        throw new NotFoundException(`El perfil con ID ${id} no existe`);
-      }
+    const datosActualizados = {...updateUserProfileDto, countryCode: this.normalizeCountryCode(updateUserProfileDto.countryCode),};
+    const updated = await this.userProfileRepository.update(id, datosActualizados);
 
-      return updated;
-    } catch (error: any) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      if (error?.code === 'ER_DUP_ENTRY' || error?.errno === 1062) {
-        throw new ConflictException('Los datos enviados ya están en uso por otro perfil');
-      }
-      throw new InternalServerErrorException('Error al actualizar el perfil');
+    if (!updated) {
+      throw new NotFoundException(`El perfil con ID ${id} no existe`);
     }
+
+    return updated;
   }
 
 
 
   async remove(id: number): Promise<{ message: string }> {
-    try {
-      const result = await this.userProfileRepository.delete(id);
-      if (!result || result.affected === 0) {
-        throw new NotFoundException(`El perfil con ID ${id} no existe`);
-      }
-      return { message: `Perfil con ID ${id} eliminado exitosamente` };
-    } catch (error: any) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      if (error?.errno === 1451 || error?.code === 'ER_ROW_IS_REFERENCED_2') {
-        throw new ConflictException('No se puede eliminar el perfil porque tiene registros asociados',);
-      }
-      throw new InternalServerErrorException('Error al eliminar el perfil');
+    const result = await this.userProfileRepository.delete(id);
+
+    if (!result.affected) {
+      throw new NotFoundException(`El perfil con ID ${id} no existe`);
     }
+
+    return { message: `Perfil con ID ${id} eliminado exitosamente` };
   }
 
 

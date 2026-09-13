@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { QueryFailedFilter } from './common/filters/query-failed.filter';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -45,6 +47,12 @@ import { UserProfilesModule } from './user-profiles/user-profiles.module';
     UserProfilesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Red de seguridad con mensajes genéricos: ningún error del driver escapa
+    // como 500 sin traducir. Se usa `useValue` y no `useClass` porque el
+    // constructor recibe un objeto de mensajes que Nest no sabe inyectar.
+    { provide: APP_FILTER, useValue: new QueryFailedFilter() },
+  ],
 })
 export class AppModule {}
