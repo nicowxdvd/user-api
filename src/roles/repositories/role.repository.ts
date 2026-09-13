@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 import { Role } from '../entities/role.entity';
+import { Permission } from '../../permissions/entities/permission.entity';
 import { CreateRoleDto } from '../dto/create-role.dto';
 import { IRoleRepository } from '../interfaces/role-repository.interface';
 
@@ -38,6 +39,13 @@ export class RoleRepository implements IRoleRepository {
 
   async delete(id: number): Promise<DeleteResult> {
     return await this.typeormRepo.delete(id);
+
+  }
+
+
+  async setPermissions(id: number, permissions: Permission[]): Promise<Role> {
+    await this.typeormRepo.save({ id, permissions });
+    return (await this.typeormRepo.findOne({ where: { id }, relations: { permissions: true } })) as Role;
 
   }
 

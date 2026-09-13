@@ -1,7 +1,10 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, ClassSerializerInterceptor, UseInterceptors, Query, ParseBoolPipe, Patch, ParseIntPipe, UseFilters } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
+import { UpdateRolePermissionsDto } from './dto/update-role-permissions.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 import { QueryFailedFilter } from '../common/filters/query-failed.filter';
 
 @UseGuards(AuthGuard)
@@ -30,6 +33,15 @@ export class RolesController {
   @Patch(':id/status')
   toggleStatus(@Param('id', ParseIntPipe) id: number) {
     return this.rolesService.toggleStatus(id);
+
+  }
+
+
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions('permissions:manage')
+  @Patch(':id/permissions')
+  updatePermissions(@Param('id', ParseIntPipe) id: number, @Body() updateRolePermissionsDto: UpdateRolePermissionsDto) {
+    return this.rolesService.updatePermissions(id, updateRolePermissionsDto.permissionIds);
 
   }
 

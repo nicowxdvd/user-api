@@ -13,9 +13,10 @@ export class AuthRepository implements IAuthRepository {
   async findByEmailWithPassword(email: string): Promise<User | null> {
     return await this.typeormRepo.findOne({
       where: { email },
-      relations: { role: true },
+      relations: { role: { permissions: true } },
       select: {
-        id: true, email: true, password: true, isActive: true, roleId: true, role: { id: true, name: true, isActive: true }
+        id: true, email: true, password: true, isActive: true, roleId: true,
+        role: { id: true, name: true, isActive: true, permissions: { id: true, name: true, isActive: true } },
       },
     });
 

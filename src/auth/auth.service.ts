@@ -28,7 +28,9 @@ export class AuthService {
     if (!user.isActive)
       throw new UnauthorizedException('El usuario está inactivo');
 
-    const payload: JwtPayload = { sub: user.id, email: user.email, roleId: user.roleId, role: user.role?.name };
+    const permissions = user.role?.permissions?.filter((permission) => permission.isActive).map((permission) => permission.name) ?? [];
+
+    const payload: JwtPayload = { sub: user.id, email: user.email, roleId: user.roleId, role: user.role?.name, permissions };
 
     return { access_token: this.jwtService.sign(payload) };
 

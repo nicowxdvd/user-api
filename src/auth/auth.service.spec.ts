@@ -40,7 +40,19 @@ describe('AuthService', () => {
     const resultado = await service.login({ email: 'nico@correo.com', password: 'contrasena-correcta' });
 
     expect(resultado).toEqual({ access_token: 'token-firmado' });
-    expect(jwtService.sign).toHaveBeenCalledWith({ sub: 'a1b2c3d4', email: 'nico@correo.com', roleId: 1, role: 'ADMIN' });
+    expect(jwtService.sign).toHaveBeenCalledWith({ sub: 'a1b2c3d4', email: 'nico@correo.com', roleId: 1, role: 'ADMIN', permissions: [] });
+
+  });
+
+
+  it('incluye en el token solo los permisos activos del rol', async () => {
+    const permisos = [{ id: 1, name: 'users:list', isActive: true }, { id: 2, name: 'users:delete', isActive: false }];
+    authRepository.findByEmailWithPassword.mockResolvedValue({ ...usuarioActivo, role: { ...usuarioActivo.role, permissions: permisos } } as User);
+    bcryptCompare.mockResolvedValue(true);
+
+    await service.login({ email: 'nico@correo.com', password: 'contrasena-correcta' });
+
+    expect(jwtService.sign).toHaveBeenCalledWith(expect.objectContaining({ permissions: ['users:list'] }));
 
   });
 
