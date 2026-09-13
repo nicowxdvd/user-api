@@ -8,12 +8,12 @@ Verificado sobre `develop` el 2026-09-12.
 
 ## Seguridad
 
-- [ ] `GET /users` devuelve el directorio completo a cualquier cuenta con token, y el
-  registro es público: crear una cuenta descartable alcanza para volcar el correo,
-  nombre, rol y fechas de todos los usuarios. Ya no hay autorización por rol, así que
-  hay que resolverlo por otra vía: recortar lo que devuelve `findAll`, restringir a
-  que cada quien lea lo suyo, o cerrar el registro público. Las dos últimas son
-  decisiones de producto. (`users.controller.ts:36`)
+- [ ] `GET /users` sigue listando a todos los usuarios para cualquier cuenta con token,
+  y el registro es público: crear una cuenta descartable alcanza para obtener la lista
+  completa de nombres. El correo ya no se expone —se quitó del `select` de `findAll`—,
+  así que lo que queda es una decisión de producto: cerrar el registro público, o
+  reintroducir autorización por rol. Para el caso de uso habitual, que cada cuenta lea
+  sus propios datos, ya está `GET /users/me`. (`users.controller.ts:39`)
 
 ## Funcionalidad rota
 
@@ -27,11 +27,11 @@ Verificado sobre `develop` el 2026-09-12.
   además en inglés; `IUserRepository` no declara método de borrado; y el parámetro usa
   `ParseIntPipe` cuando el id es un UUID. Contemplar errno 1451 si el usuario tiene
   registros asociados. `IUserProfileRepository.delete` es la referencia de forma.
-  (`users.service.ts:61`, `users.controller.ts:59`)
+  (`users.service.ts:80`, `users.controller.ts:71`)
 - [ ] `findOne` devuelve `null` en vez de lanzar `NotFoundException`: un id inexistente
-  responde 200 con cuerpo vacío. (`users.service.ts:53`)
+  responde 200 con cuerpo vacío. (`users.service.ts:72`)
 - [ ] `update` no verifica que el usuario exista ni traduce los errores del driver.
-  (`users.service.ts:57`)
+  (`users.service.ts:76`)
 - [ ] No hay forma de activar ni desactivar un usuario desde la API: ningún DTO declara
   `isActive`, así que la columna nunca se escribe y todas las filas conservan el valor
   por omisión. Decidir si va en el DTO de actualización o en un endpoint de cambio de
@@ -70,9 +70,7 @@ Verificado sobre `develop` el 2026-09-12.
   sí tienen `users.service.ts` y `roles.service.ts`. Son los únicos errores del
   proyecto.
 - [ ] 3 advertencias de lint: dos directivas `eslint-disable` sin uso en
-  `users.service.ts` (líneas 1 y 28) y una promesa sin await en `main.ts:18`.
-- [ ] `npx prettier --check src/` falla en 45 archivos. Mientras siga así, el formato no
-  sirve como señal en las revisiones.
+  `users.service.ts` (líneas 1 y 33) y una promesa sin await en `main.ts:18`.
 - [ ] Archivos de herramientas versionados: `.claude/.headroom_wrap_marker.json`,
   `.serena/project.yml` y `.serena/.gitignore`. El primero solo guarda un PID que
   cambia en cada sesión, así que ensucia `git status` de forma permanente. Van al

@@ -32,7 +32,7 @@ Los servicios nunca tocan TypeORM. Cada recurso define una interfaz de repositor
 
 Roles y user-profiles replican esto exactamente (`ROLE_REPOSITORY_TOKEN`, `USER_PROFILE_REPOSITORY_TOKEN`; ojo, en ambos el directorio es `interfaces/` frente a `interface/` en users). `user-profiles` es el módulo más completo de los tres y sirve de referencia: su `IUserProfileRepository` es el único que declara un método de borrado (`delete(id): Promise<DeleteResult>`). Al agregar un recurso, sigue esta estructura. Como la interfaz es una importación solo de tipos usada en un constructor, debe importarse con `import type` / `type IUserRepository`, o los metadatos emitidos por los decoradores rompen la inyección de dependencias.
 
-La forma de las consultas (`relations`, `select`, `where`) vive en el repositorio, no en el servicio; p. ej. `UserRepository.findAll(roleActive?)` hace join con `role` y elige manualmente las columnas devueltas.
+La forma de las consultas (`relations`, `select`, `where`) vive en el repositorio, no en el servicio; p. ej. `UserRepository.findAll(roleActive?)` hace join con `role` y elige manualmente las columnas devueltas. Ese `select` **no incluye `email`**: se quitó a propósito para que el listado no sea un padrón de correos, dado que cualquiera puede registrarse y obtener un token. No lo vuelvas a agregar.
 
 ### Autenticación
 
@@ -41,6 +41,8 @@ La forma de las consultas (`relations`, `select`, `where`) vive en el repositori
 `AuthService.login` es real: busca al usuario por correo con `AuthRepository.findByEmailWithPassword` (que hace join con `role` y recupera el `password` pese al `select: false`), compara con `bcrypt.compare`, rechaza a los usuarios inactivos y firma un `JwtPayload` con `{ sub, email, roleId, role }`, donde `role` es el **nombre** del rol.
 
 `AuthGuard` parsea `Authorization: Bearer <token>`, lo verifica y adjunta el payload a `request['user']`. Se declara a nivel de clase en los controladores, así que **protege todo el controlador salvo lo que se marque con `@Public()`** (`common/decorators/public.decorator.ts`), que el guard lee con `reflector.getAllAndOverride`. Hoy el único endpoint público es `POST /users`.
+
+`GET /users/me` devuelve la ficha de la cuenta dueña del token: el id sale de `request['user']` con `@Req()`, nunca de la URL, así que no hay forma de pedir la ficha de otra persona. La ruta `'me'` se declara **antes** de `@Get(':id')` porque Nest resuelve por orden de declaración y `:id` capturaría la palabra `me` como identificador. El `Request` de express se importa con `import type`, por la misma restricción de `emitDecoratorMetadata` que afecta a las interfaces de repositorio.
 
 **No existe autorización por rol.** Había un `RolesGuard` y un decorador `@Roles('ADMIN')` que no restringían nada —el guard devolvía `true` siempre y nadie leía su metadata—, y se eliminaron por decisión explícita en `c266db9`. La autorización disponible es binaria: hay token válido o no lo hay. No reintroduzcas `@Roles` sin acordarlo antes.
 
@@ -69,6 +71,8 @@ Los errores del driver de MySQL se traducen a excepciones HTTP dentro de los ser
 Los mensajes visibles para el usuario (mensajes de validación, texto de excepciones) y los mensajes de commit se escriben en español. Respeta eso.
 
 ESLint ejecuta `recommendedTypeChecked`. Donde el código choca con él, se usan comentarios `eslint-disable` puntuales (p. ej. las llamadas sin tipar de bcrypt en `users.service.ts`) en lugar de relajar la configuración.
+
+**Prettier no se usa en este proyecto**: se desinstaló y no hay archivo de configuración. No corras `npx prettier` —se descarga solo y aplica sus valores por omisión, que no coinciden con el estilo del código— ni agregues su chequeo a la revisión. El formato lo fija ESLint.
 
 ## Idioma y Comunicación
 - La documentación interna y comentarios deben estar en español 
