@@ -14,22 +14,13 @@ import { UserProfilesModule } from './user-profiles/user-profiles.module';
   imports: [
     UsersModule,
     AuthModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        console.log(
-          '📌 USUARIO DETECTADO:',
-          configService.get<string>('DB_USERNAME'),
-        );
-        console.log(
-          '📌 BASE DE DATOS:',
-          configService.get<string>('DB_DATABASE'),
-        );
+        console.log('📌 USUARIO DETECTADO:', configService.get<string>('DB_USERNAME'));
+        console.log('📌 BASE DE DATOS:', configService.get<string>('DB_DATABASE'));
 
         return {
           type: 'mysql',
@@ -41,6 +32,7 @@ import { UserProfilesModule } from './user-profiles/user-profiles.module';
           autoLoadEntities: true,
           synchronize: true,
         };
+
       },
     }),
     RolesModule,
