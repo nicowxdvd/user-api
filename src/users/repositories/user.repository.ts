@@ -11,7 +11,13 @@ export class UserRepository implements IUserRepository {
 
 
   async findAll(roleActive?: boolean): Promise<User[]> {
-    return await this.typeormRepo.find({ relations: { role: true }, where: roleActive !== undefined ? { role: { isActive: roleActive } } : {}, select: { id: true, firstName: true, lastName: true, isActive: true, roleId: true, createdAt: true, updatedAt: true, role: { id: true, name: true } } });
+    return await this.typeormRepo.find({
+      relations: { role: true },
+      where: roleActive !== undefined ? { role: { isActive: roleActive } } : {},
+      select: {
+        id: true, firstName: true, lastName: true, isActive: true, roleId: true, createdAt: true, updatedAt: true, role: { id: true, name: true }
+      },
+    });
 
   }
 

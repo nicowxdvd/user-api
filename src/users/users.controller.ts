@@ -32,9 +32,6 @@ export class UsersController {
   }
 
 
-  // 'me' se declara antes de ':id' a propósito: Nest resuelve las rutas por
-  // orden de declaración, y si ':id' fuera primero capturaría la palabra 'me'
-  // como si fuese un identificador.
   @Get('me')
   findMe(@Req() request: Request) {
     const { sub } = request['user'] as JwtPayload;
