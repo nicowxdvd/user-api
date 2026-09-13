@@ -8,12 +8,33 @@ Verificado sobre `develop` el 2026-09-12.
 
 ## Seguridad
 
-- [ ] `GET /users` sigue listando a todos los usuarios para cualquier cuenta con token,
-  y el registro es público: crear una cuenta descartable alcanza para obtener la lista
-  completa de nombres. El correo ya no se expone —se quitó del `select` de `findAll`—,
-  así que lo que queda es una decisión de producto: cerrar el registro público, o
-  reintroducir autorización por rol. Para el caso de uso habitual, que cada cuenta lea
-  sus propios datos, ya está `GET /users/me`. (`users.controller.ts:50`)
+- [x] `GET /users` seguía listando a todos los usuarios para cualquier cuenta con
+  token, y el registro es público: crear una cuenta descartable alcanzaba para obtener
+  la lista completa de nombres. El correo ya no se expone —se quitó del `select` de
+  `findAll`—, así que lo que quedaba era una decisión de producto: cerrar el registro
+  público, o reintroducir autorización. Para el caso de uso habitual, que cada cuenta
+  lea sus propios datos, ya está `GET /users/me`. Se descartó cerrar el registro y
+  también hardcodear un nombre de rol (`ADMIN`), porque los roles son administrables:
+  se pueden renombrar, borrar o crear roles nuevos que necesiten el mismo acceso.
+  Resuelto con un modelo de permisos propio, desacoplado del nombre del rol: entidad
+  `Permission` + relación N:M con `Role` vía tabla puente `role_permissions`, módulo
+  `permissions` completo (mismo patrón interfaz+token+repositorio que `roles` y
+  `user-profiles`), `JwtPayload.permissions: string[]` armado en `AuthService.login`
+  con los permisos activos del rol, y `PermissionsGuard` + `@RequirePermissions()`
+  (mismo mecanismo `SetMetadata`+`Reflector` que `@Public()`). `GET /users` ahora exige
+  el permiso `users:list`. Se cubrió además el hueco de que cualquier cuenta pudiera
+  otorgarse permisos a sí misma: `POST /permissions`, `PATCH /permissions/:id/status`,
+  `DELETE /permissions/:id` y `PATCH /roles/:id/permissions` exigen
+  `permissions:manage`, con un escape de arranque en frío en el guard (un permiso sin
+  asignar a ningún rol todavía deja pasar; se cierra apenas se asigna una vez) para no
+  dejar el sistema sin forma de configurarse. Sigue sin gate de permiso, igual que
+  antes: `POST /roles`, `DELETE /roles/:id` y `PATCH /roles/:id/status`, solo token
+  válido. (`users.controller.ts`, `auth/permissions.guard.ts`, `permissions/`)
+- [ ] `POST /roles`, `DELETE /roles/:id` y `PATCH /roles/:id/status` quedaron fuera del
+  alcance del punto anterior: cualquier cuenta con token válido todavía puede crear,
+  borrar o activar/desactivar roles, sin exigir `permissions:manage` ni ningún otro
+  permiso. Decidir si conviene gatearlos igual que se hizo con `PATCH
+  /roles/:id/permissions`. (`roles.controller.ts`)
 
 ## Funcionalidad rota
 
@@ -74,11 +95,13 @@ Verificado sobre `develop` el 2026-09-12.
 
 ## Deuda técnica
 
-- [ ] 4 de 10 suites fallan: `users.service`, `users.controller`, `roles.service` y
-  `roles.controller`. Son scaffolding del CLI de Nest, con `providers: [XService]`
-  pelado y sin mock del token de repositorio. `user-profiles.service.spec.ts` ya aplica
-  el patrón correcto. Al repararlas, cubrir correo duplicado (409), usuario inexistente
-  (404) e `isActive` como booleano en ambos sentidos.
+- [ ] 2 de 10 suites fallan: `users.service` y `users.controller`. Son scaffolding del
+  CLI de Nest, con `providers: [XService]` pelado y sin mock del token de repositorio.
+  `roles.service.spec.ts` y `roles.controller.spec.ts` ya se repararon (mock del token
+  y `overrideGuard`) al tocarlas por el trabajo de permisos; `user-profiles.service.spec.ts`
+  sigue siendo la referencia del patrón. Al reparar las dos que quedan, cubrir correo
+  duplicado (409), usuario inexistente (404) e `isActive` como booleano en ambos
+  sentidos.
 - [ ] `auth.guard.spec.ts` hace `new AuthGuard()` pero el constructor pide dos
   argumentos (`JwtService` y `Reflector`). `npm run build` no lo detecta porque
   `tsconfig.build.json` excluye los specs.
