@@ -22,10 +22,11 @@ Verificado sobre `develop` el 2026-09-12.
 - [x] `update` no verifica que el usuario exista: un id inexistente responde 200 con
   cuerpo vacío, igual que `findOne`. Los errores del driver ya no son problema suyo,
   los traduce `QueryFailedFilter`. (`users.service.ts:66`)
-- [ ] No hay forma de activar ni desactivar un usuario desde la API: ningún DTO declara
+- [x] No hay forma de activar ni desactivar un usuario desde la API: ningún DTO declara
   `isActive`, así que la columna nunca se escribe y todas las filas conservan el valor
   por omisión. Decidir si va en el DTO de actualización o en un endpoint de cambio de
-  estado, como el que ya expone `roles`.
+  estado, como el que ya expone `roles`. Resuelto con `PATCH /users/:id/status`, mismo
+  patrón que `RolesController.toggleStatus`.
 
 ## Contrato y consistencia
 
