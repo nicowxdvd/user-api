@@ -17,11 +17,6 @@ Verificado sobre `develop` el 2026-09-12.
 
 ## Funcionalidad rota
 
-- [ ] `PATCH /users/:id` exige el cuerpo completo, o sea que no es un `PATCH`. Los
-  campos de `CreateUserDto` tienen inicializador (`firstName: string = ''`) y con
-  `transform: true` llegan como cadena vacía, así que `@IsNotEmpty` dispara aunque el
-  campo no se haya enviado. Se arregla quitando los inicializadores y declarando las
-  propiedades con `!` o como opcionales. (`create-user.dto.ts`)
 - [ ] Borrar un usuario deja huérfano su perfil. `user_profiles.user_id` es un `varchar`
   suelto: la entidad no declara `@ManyToOne` hacia `User` y la base tampoco tiene la
   foreign key —la única que existe es `users.role_id → roles`—, así que nada impide que
