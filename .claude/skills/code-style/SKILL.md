@@ -309,6 +309,43 @@ async findMe(id: string) {
 }
 ```
 
+### 14. Objetos de consulta de TypeORM en repositorios
+
+En los métodos de `repositories/*.repository.ts` que arman el objeto de opciones para un método de TypeORM (`find`, `findOne`, etc. con `relations`, `where`, `select`...), rompe ese objeto: una propiedad de primer nivel por línea. Si el valor de una propiedad es corto, va inline en esa misma línea; si es largo, su contenido baja a una línea indentada propia.
+
+**Correcto:**
+
+```typescript
+return await this.typeormRepo.find({
+  relations: { role: true },
+  where: roleActive !== undefined ? { role: { isActive: roleActive } } : {},
+  select: {
+    id: true, firstName: true, lastName: true, isActive: true, roleId: true, createdAt: true, updatedAt: true, role: { id: true, name: true }
+  },
+});
+```
+
+Esta excepción aplica solo al objeto de opciones de TypeORM dentro de un repositorio. El resto del archivo (constructor, otros métodos simples, imports) sigue las reglas generales de densidad horizontal.
+
+### 15. Alineación tabular de firmas en interfaces
+
+En una interfaz con firmas de método contiguas, alinea verticalmente el `:` del tipo de retorno con espacios, usando como referencia la firma más larga — misma lógica que la regla 2, aplicada a interfaces en vez de a `const`/`let`.
+
+**Correcto:**
+
+```typescript
+export interface IUserRepository {
+  findAll(roleActive?: boolean)           : Promise<User[]>;
+  findById(id: string)                    : Promise<User | null>;
+  findByEmail(email: string)              : Promise<User | null>;
+  save(user: Partial<User>)               : Promise<User>;
+  update(id: string, user: Partial<User>) : Promise<User | null>;
+  delete(id: string)                      : Promise<DeleteResult>;
+}
+```
+
+La interfaz también termina con una línea en blanco antes del `}` de cierre, igual que un método (regla 9), aunque no tenga cuerpo.
+
 ## Regla general
 
 Antes de entregar o modificar código TypeScript/NestJS, verifica:
@@ -320,6 +357,8 @@ Antes de entregar o modificar código TypeScript/NestJS, verifica:
 * [ ] Excepciones simples en una sola línea.
 * [ ] `if` de una sola instrucción con la condición en su propia línea y la instrucción indentada debajo, sin llaves.
 * [ ] No hay comentarios docstring (JSDoc) sobre métodos, funciones o clases.
+* [ ] En repositorios, el objeto de opciones de TypeORM tiene una propiedad de primer nivel por línea.
+* [ ] En interfaces con firmas contiguas, el `:` del tipo de retorno está alineado y hay una línea en blanco antes del `}`.
 * [ ] Firmas compactas.
 * [ ] Argumentos compactos.
 * [ ] Métodos separados con exactamente tres saltos de línea.

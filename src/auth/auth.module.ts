@@ -14,22 +14,11 @@ import { AuthRepository } from './repositories/auth.repository';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: '1h',
-        },
-      }),
+      useFactory: (configService: ConfigService) => ({ secret: configService.get<string>('JWT_SECRET'), signOptions: { expiresIn: '1h' } }),
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    {
-      provide: AUTH_REPOSITORY_TOKEN,
-      useClass: AuthRepository,
-    },
-  ],
+  providers: [AuthService, { provide: AUTH_REPOSITORY_TOKEN, useClass: AuthRepository }],
   exports: [JwtModule, AuthService],
 })
 export class AuthModule {}
