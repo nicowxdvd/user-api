@@ -23,7 +23,7 @@ export class User {
   @Column({ type: 'boolean', name: 'is_active', default: true })
   isActive: boolean | undefined;
 
-  @Column({ type: 'int', name: 'role_id' })
+  @Column({ type: 'int', name: 'role_id', default: 11 })
   roleId: number | undefined;
 
   @CreateDateColumn({ name: 'created_at' })
