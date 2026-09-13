@@ -33,10 +33,9 @@ en `main.ts`, `users.service.spec.ts`/`users.controller.spec.ts` reparados,
 
 ## Deuda técnica
 
-- [ ] Archivos de herramientas versionados: `.claude/.headroom_wrap_marker.json`,
-  `.serena/project.yml` y `.serena/.gitignore`. El primero solo guarda un PID que
-  cambia en cada sesión, así que ensucia `git status` de forma permanente. Van al
-  `.gitignore` con `git rm --cached`.
+Sin ítems pendientes por ahora. Se resolvió el versionado accidental de archivos de
+herramientas (`.claude/.headroom_wrap_marker.json`, `.serena/project.yml`,
+`.serena/.gitignore`): ver git log.
 
 ## Nota sobre el esquema
 
