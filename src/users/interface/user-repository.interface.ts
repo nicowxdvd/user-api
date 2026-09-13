@@ -1,3 +1,4 @@
+import { DeleteResult } from 'typeorm';
 import { User } from '../entities/user.entity';
 export const USER_REPOSITORY_TOKEN = Symbol('USER_REPOSITORY_TOKEN');
 
@@ -7,4 +8,5 @@ export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
   save(user: Partial<User>): Promise<User>;
   update(id: string, user: Partial<User>): Promise<User | null>;
+  delete(id: string): Promise<DeleteResult>;
 }
