@@ -140,26 +140,23 @@ No dividas argumentos simples innecesariamente.
 
 ### 6. Firmas de métodos y constructores
 
-Mantén las firmas de métodos, funciones y constructores en una sola línea cuando sea razonablemente posible.
+Mantén las firmas de métodos y funciones en una sola línea cuando sea razonablemente posible (ver regla 10, densidad horizontal).
+
+Los **constructores** son la excepción: favorecen la lectura por sobre la densidad.
+
+- Un solo parámetro decorado (`@Inject`, `@InjectRepository`): ver regla 16.
+- Dos o más parámetros: uno por línea, indentado, con coma al final de cada uno salvo el último, y `) {}` en la línea de cierre.
 
 **Correcto:**
 
 ```typescript
-constructor(private readonly userService: UserService, private readonly jwtService: JwtService) {}
-```
-
-Evita:
-
-```typescript
 constructor(
-  private readonly userService: UserService,
   private readonly jwtService: JwtService,
+  @Inject(AUTH_REPOSITORY_TOKEN) private readonly authRepository: IAuthRepository,
 ) {}
 ```
 
-Lo mismo aplica a los parámetros de métodos y funciones.
-
-Excepción: constructores de un único parámetro decorado (`@InjectRepository`, `@Inject`) — ver regla 16.
+Lo mismo (mantener en una sola línea) aplica a los parámetros de métodos y funciones normales, que no son constructores.
 
 ### 7. Llamadas a funciones compactas
 
@@ -271,9 +268,8 @@ No conviertas automáticamente código compacto en formato multilínea solamente
 * Un objeto tiene varias propiedades.
 * Una llamada tiene varios argumentos.
 * Un import tiene varios elementos.
-* Un constructor tiene varias dependencias.
 
-La prioridad es este formato compacto.
+La prioridad es este formato compacto. Excepción: constructores de dos o más parámetros (regla 6).
 
 ### 12. Prettier y linters
 
