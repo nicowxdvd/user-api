@@ -8,6 +8,7 @@ import { AUTH_REPOSITORY_TOKEN, type IAuthRepository } from './interfaces/auth-r
 import { PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN, type IPasswordResetTokenRepository } from './interfaces/password-reset-token-repository.interface';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { createHash, randomBytes } from 'crypto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -60,7 +61,22 @@ export class AuthService {
   }
 
 
-  async resetPassword(){
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const { newPassword, token } = resetPasswordDto;
+    const newTokenHash           = createHash('sha256').update(token).digest('hex');
+    const resetToken             = await this.passwordResetTokenRepository.findValidByHash(newTokenHash);
+
+    if (resetToken) {
+      const { userId, id } = resetToken;
+      if (userId && id) {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await this.authRepository.updatePassword(userId, hashedPassword);
+        await this.passwordResetTokenRepository.markAsUsed(id);
+      }
+
+    }
+
+    return { message: 'Contraseña creada' };
 
   }
 
