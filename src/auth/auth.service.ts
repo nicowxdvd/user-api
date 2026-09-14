@@ -5,11 +5,18 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { LoginResponse } from './interfaces/login-response.interface';
 import { AUTH_REPOSITORY_TOKEN, type IAuthRepository } from './interfaces/auth-repository.interface';
+import { PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN, type IPasswordResetTokenRepository } from './interfaces/password-reset-token-repository.interface';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { createHash, randomBytes } from 'crypto';
 
 @Injectable()
 export class AuthService {
 
-  constructor(private readonly jwtService: JwtService, @Inject(AUTH_REPOSITORY_TOKEN) private readonly authRepository: IAuthRepository) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    @Inject(AUTH_REPOSITORY_TOKEN) private readonly authRepository: IAuthRepository,
+    @Inject(PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN) private readonly passwordResetTokenRepository: IPasswordResetTokenRepository,
+  ) {}
 
 
   async login(loginUserDto: LoginUserDto): Promise<LoginResponse> {
@@ -30,6 +37,30 @@ export class AuthService {
     const payload: JwtPayload = { sub: user.id, email: user.email, roleId: user.roleId, role: user.role?.name, permissions };
 
     return { access_token: this.jwtService.sign(payload) };
+
+  }
+
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const { email } = forgotPasswordDto;
+
+    const user = await this.authRepository.findByEmailWithPassword(email);
+    if (user?.id && user.isActive) {
+      await this.passwordResetTokenRepository.invalidateAllForUser(user.id);
+
+      const token          = randomBytes(32).toString('hex');
+      const tokenHash      = createHash('sha256').update(token).digest('hex');
+      const expirationDate = new Date(Date.now() + 30 * 60 * 1000);
+      await this.passwordResetTokenRepository.create(user.id, tokenHash, expirationDate);
+
+    }
+
+    return { message: 'Correo enviado' };
+
+  }
+
+
+  async resetPassword(){
 
   }
 
