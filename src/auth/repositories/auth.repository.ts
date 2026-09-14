@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { IAuthRepository } from '../interfaces/auth-repository.interface';
 
@@ -19,6 +19,12 @@ export class AuthRepository implements IAuthRepository {
         role: { id: true, name: true, isActive: true, permissions: { id: true, name: true, isActive: true } },
       },
     });
+
+  }
+
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<UpdateResult> {
+    return await this.typeormRepo.update(userId, { password: hashedPassword });
 
   }
 

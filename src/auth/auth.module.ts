@@ -7,10 +7,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { AUTH_REPOSITORY_TOKEN } from './interfaces/auth-repository.interface';
 import { AuthRepository } from './repositories/auth.repository';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN } from './interfaces/password-reset-token-repository.interface';
+import { PasswordResetTokenRepository } from './repositories/password-reset-token.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, PasswordResetToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -18,7 +21,7 @@ import { AuthRepository } from './repositories/auth.repository';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, { provide: AUTH_REPOSITORY_TOKEN, useClass: AuthRepository }],
+  providers: [AuthService, { provide: AUTH_REPOSITORY_TOKEN, useClass: AuthRepository }, { provide: PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN, useClass: PasswordResetTokenRepository }],
   exports: [JwtModule, AuthService],
 })
 export class AuthModule {}

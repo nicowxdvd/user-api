@@ -18,7 +18,7 @@ describe('AuthService', () => {
   const usuarioActivo = { id: 'a1b2c3d4', email: 'nico@correo.com', password: 'hash-de-la-contrasena', isActive: true, roleId: 1, role: { id: 1, name: 'ADMIN' } } as User;
 
   beforeEach(async () => {
-    authRepository = { findByEmailWithPassword: jest.fn() };
+    authRepository = { findByEmailWithPassword: jest.fn(), updatePassword: jest.fn() };
     jwtService = { sign: jest.fn().mockReturnValue('token-firmado') };
 
     const module: TestingModule = await Test.createTestingModule({ providers: [AuthService, { provide: AUTH_REPOSITORY_TOKEN, useValue: authRepository }, { provide: JwtService, useValue: jwtService }] }).compile();

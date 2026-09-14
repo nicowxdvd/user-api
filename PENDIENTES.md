@@ -78,7 +78,7 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
   controladores (`roles`, `user-profiles`). Asegura formato UUID válido en todas las
   rutas antes de llegar al servicio.
 
-  ## Permisos y Autorización
+## Permisos y Autorización
 
 - [ ] Explorar implementación de rol **superuser** y permisos comodín. Actualmente los
   permisos se declaran en decoradores (`@RequirePermissions('users:list')`), lo que ata
@@ -87,6 +87,51 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
   - Agregar lógica en `PermissionsGuard.canActivate()` para detectar `*` o `SUPERUSER`
   - O asignar en la DB todos los permisos específicos al rol SUPERUSER (menos escalable)
   - Futuro: permisos dinámicos en config/DB en lugar de decoradores.
+
+## Revisión pendiente: recuperación de contraseña (code-review `c9ac693..HEAD`)
+
+Hallazgos del `/code-review` de la rama `feature/password-reset`, sin resolver, a retomar:
+
+- [ ] **Regresión real:** `src/auth/auth.service.spec.ts` no provee
+  `PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN` en el `TestingModule`. Las 6 tests de esa suite
+  fallan por inyección de dependencias no resuelta. No es de las 4 suites ya documentadas
+  como rotas en este archivo (scaffolding del Nest CLI): es un mock que falta agregar.
+
+- [ ] `AuthService.resetPassword` valida el token y lo marca usado en dos pasos no
+  atómicos (`findValidByHash` y después `markAsUsed`). Dos requests concurrentes con el
+  mismo token válido pueden pasar ambas la validación antes de que cualquiera lo marque
+  usado, rompiendo la garantía de un solo uso.
+
+- [ ] `AuthService.forgotPassword` solo hace las escrituras extra
+  (`invalidateAllForUser` + `create`) cuando la cuenta existe y está activa. Aunque la
+  respuesta es el mismo mensaje genérico siempre, el tiempo de respuesta difiere según
+  exista o no la cuenta: canal lateral que permite enumerar cuentas, justo lo que el
+  mensaje genérico buscaba evitar (ver diseño arriba).
+
+- [ ] `ForgotPasswordDto.email`: los decoradores `@IsString`/`@IsNotEmpty`/`@MinLength`/
+  `@MaxLength` no tienen `message` en español (solo `@IsEmail` lo tiene). Viola la
+  convención de mensajes de validación en español.
+
+- [ ] `PasswordResetTokenRepository.markAsUsed` e `invalidateAllForUser` descartan el
+  `UpdateResult` de TypeORM y devuelven `void`, rompiendo la convención del proyecto de
+  devolver el resultado crudo para que el servicio decida mirando `affected`.
+
+- [ ] `AuthService.forgotPassword` reusa `findByEmailWithPassword` (join con
+  role+permissions, trae el password) solo para leer `id`/`isActive`. Evaluar un método
+  liviano de existencia/activo, sin el join.
+
+- [ ] `PasswordResetToken.tokenHash` no tiene índice ni unique, siendo la clave de
+  búsqueda de cada intento de reset. Las filas nunca se borran (solo se invalidan), así
+  que la tabla crece indefinidamente y la búsqueda se vuelve un full scan con el tiempo.
+
+- [ ] `AuthService.forgotPassword`: `invalidateAllForUser` y `create` son awaits
+  secuenciales que no dependen entre sí; podrían ir en `Promise.all`.
+
+- [ ] `PasswordResetToken.user` (`@ManyToOne`) está declarada pero nunca se usa en el
+  diff; solo se usa `userId`. Evaluar si vale la pena mantenerla.
+
+- [ ] `AuthService.resetPassword` anida `if (resetToken) { if (userId && id) { ... } }`;
+  podría aplanarse con guard clauses, más consistente con el estilo de `login()`.
 
 ## Nota sobre el esquema
 

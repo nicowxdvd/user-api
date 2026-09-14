@@ -22,8 +22,6 @@ export class UserRepository implements IUserRepository {
     if (roleActive !== undefined)
       query.andWhere('role.isActive = :roleActive', { roleActive });
 
-    // Keyset: la página siguiente arranca después de la última fila vista, no en un offset.
-    // Evita el escaneo y descarte que hace MySQL con OFFSET a medida que crece la tabla.
     if (cursor)
       query.andWhere('(user.createdAt, user.id) > (:cursorCreatedAt, :cursorId)', { cursorCreatedAt: cursor.createdAt, cursorId: cursor.id });
 
