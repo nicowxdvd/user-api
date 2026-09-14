@@ -159,6 +159,8 @@ constructor(
 
 Lo mismo aplica a los parámetros de métodos y funciones.
 
+Excepción: constructores de un único parámetro decorado (`@InjectRepository`, `@Inject`) — ver regla 16.
+
 ### 7. Llamadas a funciones compactas
 
 Mantén las llamadas con argumentos simples o moderados en una sola línea.
@@ -346,6 +348,24 @@ export interface IUserRepository {
 
 La interfaz también termina con una línea en blanco antes del `}` de cierre, igual que un método (regla 9), aunque no tenga cuerpo.
 
+### 16. Constructores con un único parámetro decorado
+
+Cuando el constructor tenga un solo parámetro con un decorador largo (`@InjectRepository(...)`,
+`@Inject(...)`), pártelo en dos líneas: el decorador y el parámetro en su propia línea indentada,
+y el `{}` del cuerpo en la línea siguiente, sin indentar más que el `constructor(`.
+
+**Correcto:**
+
+```typescript
+constructor(
+  @InjectRepository(User) private readonly typeormRepo: Repository<User>)
+{}
+```
+
+Esta regla es una excepción puntual a la regla 6 (firmas compactas): aplica solo a
+constructores de un parámetro con decorador. Constructores con dos o más parámetros siguen
+la regla 6 (una sola línea).
+
 ## Regla general
 
 Antes de entregar o modificar código TypeScript/NestJS, verifica:
@@ -359,6 +379,7 @@ Antes de entregar o modificar código TypeScript/NestJS, verifica:
 * [ ] No hay comentarios docstring (JSDoc) sobre métodos, funciones o clases.
 * [ ] En repositorios, el objeto de opciones de TypeORM tiene una propiedad de primer nivel por línea.
 * [ ] En interfaces con firmas contiguas, el `:` del tipo de retorno está alineado y hay una línea en blanco antes del `}`.
+* [ ] Constructores de un solo parámetro decorado (`@Inject`/`@InjectRepository`) van en dos líneas, con el `{}` en la línea siguiente.
 * [ ] Firmas compactas.
 * [ ] Argumentos compactos.
 * [ ] Métodos separados con exactamente tres saltos de línea.
