@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, MoreThan, Repository } from 'typeorm';
+import { IsNull, MoreThan, Repository, UpdateResult } from 'typeorm';
 import { IPasswordResetTokenRepository } from '../interfaces/password-reset-token-repository.interface';
 import { PasswordResetToken } from '../entities/password-reset-token.entity';
 
@@ -24,9 +24,8 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
   }
 
 
-  async markAsUsed(id: string): Promise<void> {
-    const usedAt = new Date();
-    await this.typeormRepo.update(id, { usedAt });
+  async markAsUsed(id: string): Promise<UpdateResult> {
+    return this.typeormRepo.update({ id, usedAt: IsNull(), expiresAt: MoreThan(new Date()) }, { usedAt: new Date() });
 
   }
 
