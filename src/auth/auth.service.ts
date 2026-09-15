@@ -66,15 +66,15 @@ export class AuthService {
     const newTokenHash           = createHash('sha256').update(token).digest('hex');
     const resetToken             = await this.passwordResetTokenRepository.findValidByHash(newTokenHash);
 
-    if (resetToken) {
-      const { userId, id } = resetToken;
-      if (userId && id) {
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await this.authRepository.updatePassword(userId, hashedPassword);
-        await this.passwordResetTokenRepository.markAsUsed(id);
-      }
+    if (!resetToken?.userId || !resetToken.id)
+      return { message: 'Contraseña creada' };
 
-    }
+    const { affected } = await this.passwordResetTokenRepository.markAsUsed(resetToken.id);
+    if (!affected)
+      return { message: 'Contraseña creada' };
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.authRepository.updatePassword(resetToken.userId, hashedPassword);
 
     return { message: 'Contraseña creada' };
 
