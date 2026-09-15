@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { AUTH_REPOSITORY_TOKEN, IAuthRepository } from './interfaces/auth-repository.interface';
+import { PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN, IPasswordResetTokenRepository } from './interfaces/password-reset-token-repository.interface';
 import { User } from '../users/entities/user.entity';
 
 jest.mock('bcrypt', () => ({ compare: jest.fn() }));
@@ -13,15 +14,17 @@ const bcryptCompare = bcrypt.compare as jest.Mock;
 describe('AuthService', () => {
   let service: AuthService;
   let authRepository: jest.Mocked<IAuthRepository>;
+  let passwordResetTokenRepository: jest.Mocked<IPasswordResetTokenRepository>;
   let jwtService: { sign: jest.Mock };
 
   const usuarioActivo = { id: 'a1b2c3d4', email: 'nico@correo.com', password: 'hash-de-la-contrasena', isActive: true, roleId: 1, role: { id: 1, name: 'ADMIN' } } as User;
 
   beforeEach(async () => {
     authRepository = { findByEmailWithPassword: jest.fn(), updatePassword: jest.fn() };
+    passwordResetTokenRepository = { create: jest.fn(), findValidByHash: jest.fn(), markAsUsed: jest.fn(), invalidateAllForUser: jest.fn() };
     jwtService = { sign: jest.fn().mockReturnValue('token-firmado') };
 
-    const module: TestingModule = await Test.createTestingModule({ providers: [AuthService, { provide: AUTH_REPOSITORY_TOKEN, useValue: authRepository }, { provide: JwtService, useValue: jwtService }] }).compile();
+    const module: TestingModule = await Test.createTestingModule({ providers: [AuthService, { provide: AUTH_REPOSITORY_TOKEN, useValue: authRepository }, { provide: PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN, useValue: passwordResetTokenRepository }, { provide: JwtService, useValue: jwtService }] }).compile();
 
     service = module.get<AuthService>(AuthService);
     bcryptCompare.mockReset();
