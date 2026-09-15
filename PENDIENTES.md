@@ -36,6 +36,13 @@ Lista de trabajo pendiente para este repo.
   la cuenta (`PATCH`/`PUT /users/:id` con `email` nuevo, y el futuro `reset-password`).
   Modelo de la infraestructura acordado, ver "Arquitectura de email" abajo.
 
+- [ ] Endpoint para cambiar contraseña estando logueado (distinto del reset por token):
+  algo como `PATCH /auth/change-password` o `PATCH /users/me/password`, recibe contraseña
+  actual + nueva, valida la actual con `bcrypt.compare` antes de aceptar el cambio. Hoy
+  `UpdateUserDto` excluye `password` a propósito (`PartialType(OmitType(...,
+  ['password']))`), así que este endpoint no reemplaza esa restricción, es una ruta nueva
+  separada.
+
 ## Arquitectura de email
 
 Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
@@ -64,6 +71,22 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
   campañas), `EventEmitter2` no alcanza (sin persistencia ni reintentos). Se resuelve
   cambiando el listener por un consumer de cola (`@nestjs/bullmq` + Redis) sin tocar el
   punto donde se emite el evento.
+
+## Versionado de API
+
+- [ ] Agregar versionado de API con `app.enableVersioning({ type: VersioningType.URI,
+  defaultVersion: '1' })` en `main.ts`. Rutas quedan `/v1/users`, etc. Con
+  `defaultVersion: '1'` los controladores existentes no necesitan tocarse: heredan v1
+  automático. Evaluar si el prefijo Swagger (`SwaggerModule.setup('api', ...)`) necesita
+  ajustarse para reflejar la versión.
+
+## Paginación
+
+- [ ] Agregar paginación a todos los `GET` que devuelven listas (`GET /users`,
+  `GET /roles`, y los que sumen `user-profiles`). Hoy devuelven el listado completo sin
+  límite. Definir approach (offset/limit vs cursor) y forma de respuesta estándar
+  (`items`, `total`, `page`, `pageSize` o similar) antes de tocar el primer controlador,
+  para no repetir la forma distinta en cada recurso.
 
 ## Limpieza técnica
 
