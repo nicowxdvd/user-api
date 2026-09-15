@@ -6,10 +6,13 @@ import { AuthService } from './auth.service';
 import { AUTH_REPOSITORY_TOKEN, IAuthRepository } from './interfaces/auth-repository.interface';
 import { PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN, IPasswordResetTokenRepository } from './interfaces/password-reset-token-repository.interface';
 import { User } from '../users/entities/user.entity';
+import type { UpdateResult } from 'typeorm';
+import type { PasswordResetToken } from './entities/password-reset-token.entity';
 
-jest.mock('bcrypt', () => ({ compare: jest.fn() }));
+jest.mock('bcrypt', () => ({ compare: jest.fn(), hash: jest.fn() }));
 
 const bcryptCompare = bcrypt.compare as jest.Mock;
+const bcryptHash    = bcrypt.hash as jest.Mock;
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -28,6 +31,7 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     bcryptCompare.mockReset();
+    bcryptHash.mockReset();
 
   });
 
@@ -82,4 +86,30 @@ describe('AuthService', () => {
     await expect(service.login({ email: 'nico@correo.com', password: 'contrasena-correcta' })).rejects.toThrow(new UnauthorizedException('El usuario está inactivo'));
 
   });
+
+  it('no actualiza la contraseña si el token ya fue usado o expiró', async () => {
+    passwordResetTokenRepository.findValidByHash.mockResolvedValue({ id: 'token-id', userId: 'a1b2c3d4' } as PasswordResetToken);
+    passwordResetTokenRepository.markAsUsed.mockResolvedValue({ affected: 0 } as UpdateResult);
+
+    const resultado = await service.resetPassword({ newPassword: 'NuevaClave123', token: 'a'.repeat(64) });
+
+    expect(resultado).toEqual({ message: 'Contraseña creada' });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(authRepository.updatePassword).not.toHaveBeenCalled();
+
+  });
+
+  it('actualiza la contraseña cuando el token es válido', async () => {
+    passwordResetTokenRepository.findValidByHash.mockResolvedValue({ id: 'token-id', userId: 'a1b2c3d4' } as PasswordResetToken);
+    passwordResetTokenRepository.markAsUsed.mockResolvedValue({ affected: 1 } as UpdateResult);
+    bcryptHash.mockResolvedValue('hash-simulado');
+
+    const resultado = await service.resetPassword({ newPassword: 'NuevaClave123', token: 'a'.repeat(64) });
+
+    expect(resultado).toEqual({ message: 'Contraseña creada' });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(authRepository.updatePassword).toHaveBeenCalledWith('a1b2c3d4', expect.any(String));
+
+  });
+
 });
