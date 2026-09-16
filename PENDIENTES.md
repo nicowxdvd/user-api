@@ -64,11 +64,9 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
 
 ## Versionado de API
 
-- [ ] Agregar versionado de API con `app.enableVersioning({ type: VersioningType.URI,
-  defaultVersion: '1' })` en `main.ts`. Rutas quedan `/v1/users`, etc. Con
-  `defaultVersion: '1'` los controladores existentes no necesitan tocarse: heredan v1
-  automático. Evaluar si el prefijo Swagger (`SwaggerModule.setup('api', ...)`) necesita
-  ajustarse para reflejar la versión.
+Agregado: `app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' })` en
+`main.ts`. Rutas quedan `/v1/users`, etc., sin tocar controladores existentes. Swagger ya
+refleja el prefijo `/v1` automáticamente, sin ajustes extra.
 
 ## Paginación
 
@@ -106,6 +104,13 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
   mensaje en inglés por defecto de Nest (`"ThrottlerException: Too Many Requests"`), lo
   que viola la convención de mensajes en español. Sobrescribir con `getErrorMessage()` en
   un `ThrottlerGuard` propio, o un exception filter para `ThrottlerException`.
+
+- [ ] `test/app.e2e-spec.ts` arma la app con `moduleFixture.createNestApplication()`
+  directo desde `AppModule`, sin pasar por `bootstrap()` de `main.ts`. No ejercita
+  `enableVersioning()`, `enableCors()`, `ValidationPipe` global ni Swagger, así que
+  cambios ahí (como el versionado agregado en `feature/versionado-api-uri`) no quedan
+  cubiertos por el e2e. Evaluar factorizar el armado de la app (versionado, pipes, CORS)
+  a una función compartida entre `main.ts` y el setup de e2e.
 
 ## Permisos y Autorización
 
