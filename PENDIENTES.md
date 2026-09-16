@@ -2,16 +2,6 @@
 
 Lista de trabajo pendiente para este repo.
 
-## Permisos y Autorización
-
-- [ ] Explorar implementación de rol **superuser** y permisos comodín. Actualmente los
-  permisos se declaran en decoradores (`@RequirePermissions('users:list')`), lo que ata
-  cambios a releases. Diseñar cómo un rol SUPERUSER con permiso `*` (wildcard) saltaría
-  todas las validaciones de PermissionsGuard. Considerar si es mejor:
-  - Agregar lógica en `PermissionsGuard.canActivate()` para detectar `*` o `SUPERUSER`
-  - O asignar en la DB todos los permisos específicos al rol SUPERUSER (menos escalable)
-  - Futuro: permisos dinámicos en config/DB en lugar de decoradores.
-
 ## Funcionalidad nueva
 
 - [ ] `POST /auth/forgot-password` + `POST /auth/reset-password`: recuperación de
@@ -111,10 +101,22 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
   controladores (`roles`, `user-profiles`). Asegura formato UUID válido en todas las
   rutas antes de llegar al servicio.
 
+
 - [ ] `ThrottlerException` (rate limit de `POST /auth/forgot-password`) responde 429 con
   mensaje en inglés por defecto de Nest (`"ThrottlerException: Too Many Requests"`), lo
   que viola la convención de mensajes en español. Sobrescribir con `getErrorMessage()` en
   un `ThrottlerGuard` propio, o un exception filter para `ThrottlerException`.
+
+## Permisos y Autorización
+
+- [ ] Explorar implementación de rol **superuser** y permisos comodín. Actualmente los
+  permisos se declaran en decoradores (`@RequirePermissions('users:list')`), lo que ata
+  cambios a releases. Diseñar cómo un rol SUPERUSER con permiso `*` (wildcard) saltaría
+  todas las validaciones de PermissionsGuard. Considerar si es mejor:
+  - Agregar lógica en `PermissionsGuard.canActivate()` para detectar `*` o `SUPERUSER`
+  - O asignar en la DB todos los permisos específicos al rol SUPERUSER (menos escalable)
+  - Futuro: permisos dinámicos en config/DB en lugar de decoradores.
+
 
 ## Revisión pendiente: recuperación de contraseña (code-review `c9ac693..HEAD`)
 
