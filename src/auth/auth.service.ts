@@ -44,16 +44,22 @@ export class AuthService {
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const { email } = forgotPasswordDto;
+    const start = Date.now();
+    const MIN_DURATION_MS = 200;
 
     const user = await this.authRepository.findByEmailWithPassword(email);
     if (user?.id && user.isActive) {
-      await this.passwordResetTokenRepository.invalidateAllForUser(user.id);
-
       const token          = randomBytes(32).toString('hex');
       const tokenHash      = createHash('sha256').update(token).digest('hex');
       const expirationDate = new Date(Date.now() + 30 * 60 * 1000);
+      await this.passwordResetTokenRepository.invalidateAllForUser(user.id);
       await this.passwordResetTokenRepository.create(user.id, tokenHash, expirationDate);
 
+    }
+
+    const elapsed = Date.now() - start;
+    if (elapsed < MIN_DURATION_MS) {
+      await new Promise((resolve) => setTimeout(resolve, MIN_DURATION_MS - elapsed));
     }
 
     return { message: 'Correo enviado' };
