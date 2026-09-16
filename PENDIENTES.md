@@ -157,6 +157,24 @@ Hallazgos del `/code-review` de la rama `feature/password-reset`, sin resolver, 
 - [ ] `PasswordResetToken.user` (`@ManyToOne`) está declarada pero nunca se usa en el
   diff; solo se usa `userId`. Evaluar si vale la pena mantenerla.
 
+## Deploy / Infraestructura
+
+Plan acordado (sesión 2026-09-16):
+
+- [ ] Hosting de la API: Render.com, plan free, con auto-deploy conectado al repo
+  GitHub (build corre `npm run build`, arranca con `node dist/main`). Trade-off del
+  free tier: la app duerme tras inactividad, cold start lento en el primer request.
+- [ ] Hosting de MySQL: Render no ofrece MySQL gratis (solo Postgres), así que la DB
+  va en un proveedor externo — Clever Cloud (free MySQL 10MB) o Aiven (trial free).
+  La API en Render se conecta a esa MySQL externa por red, seteando `DB_HOST`,
+  `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` al host externo (no
+  localhost).
+- [ ] GitHub Actions: workflow en `.github/workflows/` que corre `npm test`,
+  `npm run lint` y `npm run build` en cada push/PR, como gate de calidad antes de
+  mergear a main. No reemplaza el deploy: Render escucha el repo directo y
+  despliega en paralelo. Evaluar más adelante si el deploy debe esperar a que
+  Actions pase (gate explícito) o seguir en paralelo como hoy.
+
 ## Nota sobre el esquema
 
 No hay migraciones: con `synchronize: true` el esquema se deriva de las entidades en cada
