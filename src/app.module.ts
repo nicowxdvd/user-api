@@ -10,11 +10,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolesModule } from './roles/roles.module';
 import { UserProfilesModule } from './user-profiles/user-profiles.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     UsersModule,
     AuthModule,
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 5 }]),
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

@@ -23,8 +23,8 @@ Lista de trabajo pendiente para este repo.
   puede importar `UsersModule` sin generar un ciclo (`UsersModule` ya importa
   `AuthModule`). `IAuthRepository` gana `updatePassword(userId, hashedPassword)`. Las dos
   rutas responden siempre el mismo mensaje genérico exista o no el correo/token, para que
-  no sirvan de enumeración de cuentas. Falta agregar rate limit (`@nestjs/throttler`) en
-  `/forgot-password` antes de exponerlo.
+  no sirvan de enumeración de cuentas. Rate limit (`@nestjs/throttler`, 3 req/min) ya
+  agregado en `/forgot-password`.
 
   **Modo de trabajo (acordado 2026-09-13): esta tarea la programa el usuario, no Claude.**
   Claude guía paso a paso: indica qué archivo crear, qué método agregar, qué línea o
@@ -110,6 +110,11 @@ Para que sumar cada correo nuevo no implique tocar el servicio que lo dispara:
   todos los métodos con parámetro `:id` (GET, PATCH, PUT, DELETE). Mismo en otros
   controladores (`roles`, `user-profiles`). Asegura formato UUID válido en todas las
   rutas antes de llegar al servicio.
+
+- [ ] `ThrottlerException` (rate limit de `POST /auth/forgot-password`) responde 429 con
+  mensaje en inglés por defecto de Nest (`"ThrottlerException: Too Many Requests"`), lo
+  que viola la convención de mensajes en español. Sobrescribir con `getErrorMessage()` en
+  un `ThrottlerGuard` propio, o un exception filter para `ThrottlerException`.
 
 ## Revisión pendiente: recuperación de contraseña (code-review `c9ac693..HEAD`)
 
