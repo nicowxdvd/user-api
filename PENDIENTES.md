@@ -105,6 +105,16 @@ refleja el prefijo `/v1` automáticamente, sin ajustes extra.
   que viola la convención de mensajes en español. Sobrescribir con `getErrorMessage()` en
   un `ThrottlerGuard` propio, o un exception filter para `ThrottlerException`.
 
+- [ ] Evaluar agregar la regla `@typescript-eslint/return-await` (preset `strict-type-checked`
+  de typescript-eslint, no incluida en el `recommended-type-checked` que usa este proyecto).
+  Solo exige `await` antes de un `return` dentro de bloques `try/catch/finally` (para stack
+  trace y captura de errores correctos); fuera de esos bloques no exige nada, es neutra. Como
+  la convención del proyecto es no usar `try/catch` en servicios ni repositorios (los errores
+  de DB los traduce `QueryFailedFilter`, ver sección "Persistencia" de `CLAUDE.md`), hoy esta
+  regla no encontraría ningún caso para corregir en el código existente — se evaluó en
+  `PasswordResetTokenRepository` (sesión 2026-09-16) y no aplica. Vale igual sumarla al lint
+  como red de seguridad a futuro, por si algún día aparece un `try/catch` real.
+
 - [ ] `test/app.e2e-spec.ts` arma la app con `moduleFixture.createNestApplication()`
   directo desde `AppModule`, sin pasar por `bootstrap()` de `main.ts`. No ejercita
   `enableVersioning()`, `enableCors()`, `ValidationPipe` global ni Swagger, así que
