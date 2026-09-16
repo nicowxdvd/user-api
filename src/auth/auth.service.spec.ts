@@ -23,7 +23,7 @@ describe('AuthService', () => {
   const usuarioActivo = { id: 'a1b2c3d4', email: 'nico@correo.com', password: 'hash-de-la-contrasena', isActive: true, roleId: 1, role: { id: 1, name: 'ADMIN' } } as User;
 
   beforeEach(async () => {
-    authRepository = { findByEmailWithPassword: jest.fn(), updatePassword: jest.fn() };
+    authRepository = { findByEmailWithPassword: jest.fn(), updatePassword: jest.fn(), findByEmail: jest.fn() };
     passwordResetTokenRepository = { create: jest.fn(), findValidByHash: jest.fn(), markAsUsed: jest.fn(), invalidateAllForUser: jest.fn() };
     jwtService = { sign: jest.fn().mockReturnValue('token-firmado') };
 
