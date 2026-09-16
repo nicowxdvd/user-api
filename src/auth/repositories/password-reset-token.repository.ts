@@ -30,8 +30,8 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
   }
 
 
-  async invalidateAllForUser(userId: string): Promise<void> {
-    await this.typeormRepo.update({ userId, usedAt: IsNull() }, { usedAt: new Date() });
+  async invalidateAllForUser(userId: string): Promise<UpdateResult> {
+    return this.typeormRepo.update({ userId, usedAt: IsNull() }, { usedAt: new Date() });
 
   }
 
