@@ -28,4 +28,10 @@ export class AuthRepository implements IAuthRepository {
 
   }
 
+
+  async findByEmail(email: string): Promise<Pick<User, 'id' | 'isActive'> | null> {
+    return await this.typeormRepo.findOne({ where: { email }, select: { id: true, isActive: true } });
+  }
+
+
 }

@@ -47,7 +47,7 @@ export class AuthService {
     const start = Date.now();
     const MIN_DURATION_MS = 200;
 
-    const user = await this.authRepository.findByEmailWithPassword(email);
+    const user = await this.authRepository.findByEmail(email);
     if (user?.id && user.isActive) {
       const token          = randomBytes(32).toString('hex');
       const tokenHash      = createHash('sha256').update(token).digest('hex');

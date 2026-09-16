@@ -11,7 +11,6 @@ export class PasswordResetTokenRepository implements IPasswordResetTokenReposito
     @InjectRepository(PasswordResetToken) private readonly typeormRepo: Repository<PasswordResetToken>)
   {}
 
-
   async create(userId: string, tokenHash: string, expiresAt: Date): Promise<PasswordResetToken> {
     return await this.typeormRepo.save({ userId, tokenHash, expiresAt });
 
