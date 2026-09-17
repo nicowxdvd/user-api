@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { UserOrmEntity } from '../../users/infrastructure/adapters/out/persistence/user.orm-entity';
 import { IAuthRepository } from '../interfaces/auth-repository.interface';
 
 @Injectable()
 export class AuthRepository implements IAuthRepository {
 
-  constructor(@InjectRepository(User) private readonly typeormRepo: Repository<User>) {}
+  constructor(@InjectRepository(UserOrmEntity) private readonly typeormRepo: Repository<UserOrmEntity>) {}
 
 
-  async findByEmailWithPassword(email: string): Promise<User | null> {
+  async findByEmailWithPassword(email: string): Promise<UserOrmEntity | null> {
     return await this.typeormRepo.findOne({
       where: { email },
       relations: { role: { permissions: true } },
@@ -29,7 +29,7 @@ export class AuthRepository implements IAuthRepository {
   }
 
 
-  async findByEmail(email: string): Promise<Pick<User, 'id' | 'isActive'> | null> {
+  async findByEmail(email: string): Promise<Pick<UserOrmEntity, 'id' | 'isActive'> | null> {
     return await this.typeormRepo.findOne({ where: { email }, select: { id: true, isActive: true } });
   }
 

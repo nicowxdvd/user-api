@@ -1,10 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { Exclude } from 'class-transformer';
-import { Role } from '../../roles/entities/role.entity';
+import { Role } from '../../../../../roles/entities/role.entity';
 
 @Entity('users')
 @Index(['createdAt', 'id'])
-export class User {
+export class UserOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string | undefined;
 
@@ -12,7 +11,6 @@ export class User {
   email: string | undefined;
 
   @Column({ type: 'varchar', select: false })
-  @Exclude()
   password: string | undefined;
 
   @Column({ type: 'varchar', name: 'first_name' })

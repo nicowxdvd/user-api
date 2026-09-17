@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { UserOrmEntity } from '../../users/infrastructure/adapters/out/persistence/user.orm-entity';
 
 @Entity('password_reset_tokens')
 export class PasswordResetToken {
@@ -12,9 +12,9 @@ export class PasswordResetToken {
     @Column({ type: 'varchar', name: 'user_id' })
     userId: string | undefined;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => UserOrmEntity)
     @JoinColumn({ name: 'user_id' })
-    user: User | undefined;
+    user: UserOrmEntity | undefined;
 
     @Column({ type: 'datetime', name: 'expires_at' })
     expiresAt: Date | undefined;
