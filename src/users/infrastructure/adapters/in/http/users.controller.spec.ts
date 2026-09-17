@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
-import { AuthGuard } from '../../../../../auth/auth.guard';
-import { PermissionsGuard } from '../../../../../auth/permissions.guard';
+import { AuthGuard } from '../../../../../auth/infrastructure/adapters/in/http/guards/auth.guard';
+import { PermissionsGuard } from '../../../../../auth/infrastructure/adapters/in/http/guards/permissions.guard';
 import { CREATE_USER_PORT } from '../../../../domain/ports/in/create-user.port';
 import { FIND_USERS_PORT } from '../../../../domain/ports/in/find-users.port';
 import { FIND_USER_BY_ID_PORT } from '../../../../domain/ports/in/find-user-by-id.port';

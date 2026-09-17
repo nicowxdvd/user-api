@@ -2,8 +2,8 @@ import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query, ParseBool
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { PermissionResponse } from './responses/permission.response';
-import { AuthGuard } from '../../../../../auth/auth.guard';
-import { PermissionsGuard } from '../../../../../auth/permissions.guard';
+import { AuthGuard } from '../../../../../auth/infrastructure/adapters/in/http/guards/auth.guard';
+import { PermissionsGuard } from '../../../../../auth/infrastructure/adapters/in/http/guards/permissions.guard';
 import { RequirePermissions } from '../../../../../shared/infrastructure/decorators/require-permissions.decorator';
 import { QueryFailedFilter } from '../../../../../shared/infrastructure/filters/query-failed.filter';
 import { CREATE_PERMISSION_PORT } from '../../../../domain/ports/in/create-permission.port';

@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { UserOrmEntity } from '../../users/infrastructure/adapters/out/persistence/user.orm-entity';
+import { UserOrmEntity } from '../../../../../users/infrastructure/adapters/out/persistence/user.orm-entity';
 
 @Entity('password_reset_tokens')
-export class PasswordResetToken {
+export class PasswordResetTokenOrmEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string | undefined;
 
@@ -26,4 +26,3 @@ export class PasswordResetToken {
     createdAt: Date | undefined;
 
 }
-

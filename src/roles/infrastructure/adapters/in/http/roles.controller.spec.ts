@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RolesController } from './roles.controller';
-import { AuthGuard } from '../../../../../auth/auth.guard';
-import { PermissionsGuard } from '../../../../../auth/permissions.guard';
+import { AuthGuard } from '../../../../../auth/infrastructure/adapters/in/http/guards/auth.guard';
+import { PermissionsGuard } from '../../../../../auth/infrastructure/adapters/in/http/guards/permissions.guard';
 import { CREATE_ROLE_PORT } from '../../../../domain/ports/in/create-role.port';
 import { FIND_ROLES_PORT } from '../../../../domain/ports/in/find-roles.port';
 import { TOGGLE_ROLE_STATUS_PORT } from '../../../../domain/ports/in/toggle-role-status.port';

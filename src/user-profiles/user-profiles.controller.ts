@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserProfilesService } from './user-profiles.service';
 import { CreateUserProfileDto } from './dto/create-user-profile.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../auth/infrastructure/adapters/in/http/guards/auth.guard';
 import { QueryFailedFilter } from '../shared/infrastructure/filters/query-failed.filter';
 
 @ApiTags('user-profiles')

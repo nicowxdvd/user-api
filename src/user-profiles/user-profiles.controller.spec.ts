@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserProfilesController } from './user-profiles.controller';
 import { UserProfilesService } from './user-profiles.service';
 import { USER_PROFILE_REPOSITORY_TOKEN } from './interfaces/user-profile-repository.interface';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../auth/infrastructure/adapters/in/http/guards/auth.guard';
 
 describe('UserProfilesController', () => {
   let controller: UserProfilesController;
