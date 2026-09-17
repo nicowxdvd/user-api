@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { AUTH_REPOSITORY_TOKEN, IAuthRepository } from './interfaces/auth-repository.interface';
 import { PASSWORD_RESET_TOKEN_REPOSITORY_TOKEN, IPasswordResetTokenRepository } from './interfaces/password-reset-token-repository.interface';
-import { User } from '../users/entities/user.entity';
+import { UserOrmEntity } from '../users/infrastructure/adapters/out/persistence/user.orm-entity';
 import type { UpdateResult } from 'typeorm';
 import type { PasswordResetToken } from './entities/password-reset-token.entity';
 
@@ -20,7 +20,7 @@ describe('AuthService', () => {
   let passwordResetTokenRepository: jest.Mocked<IPasswordResetTokenRepository>;
   let jwtService: { sign: jest.Mock };
 
-  const usuarioActivo = { id: 'a1b2c3d4', email: 'nico@correo.com', password: 'hash-de-la-contrasena', isActive: true, roleId: 1, role: { id: 1, name: 'ADMIN' } } as User;
+  const usuarioActivo = { id: 'a1b2c3d4', email: 'nico@correo.com', password: 'hash-de-la-contrasena', isActive: true, roleId: 1, role: { id: 1, name: 'ADMIN' } } as UserOrmEntity;
 
   beforeEach(async () => {
     authRepository = { findByEmailWithPassword: jest.fn(), updatePassword: jest.fn(), findByEmail: jest.fn() };
@@ -54,7 +54,7 @@ describe('AuthService', () => {
 
   it('incluye en el token solo los permisos activos del rol', async () => {
     const permisos = [{ id: 1, name: 'users:list', isActive: true }, { id: 2, name: 'users:delete', isActive: false }];
-    authRepository.findByEmailWithPassword.mockResolvedValue({ ...usuarioActivo, role: { ...usuarioActivo.role, permissions: permisos } } as User);
+    authRepository.findByEmailWithPassword.mockResolvedValue({ ...usuarioActivo, role: { ...usuarioActivo.role, permissions: permisos } } as UserOrmEntity);
     bcryptCompare.mockResolvedValue(true);
 
     await service.login({ email: 'nico@correo.com', password: 'contrasena-correcta' });

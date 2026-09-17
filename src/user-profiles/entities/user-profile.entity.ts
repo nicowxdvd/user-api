@@ -7,7 +7,7 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { UserOrmEntity } from '../../users/infrastructure/adapters/out/persistence/user.orm-entity';
 
 @Entity('user_profiles')
 export class UserProfile {
@@ -20,9 +20,9 @@ export class UserProfile {
   // Relación 1 a 1 sobre la misma columna `user_id`: el borrado en cascada lo
   // resuelve MySQL vía FK, sin transacciones manuales entre módulos. Mismo
   // patrón que `User.roleId` + `User.role` sobre `role_id`.
-  @OneToOne(() => User, { onDelete: 'CASCADE' })
+  @OneToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user?: User;
+  user?: UserOrmEntity;
 
   @Column({ type: 'varchar', length: 255, name: 'avatar_url', nullable: true })
   avatarUrl?: string | null;

@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { UserOrmEntity } from '../../users/infrastructure/adapters/out/persistence/user.orm-entity';
 import { Permission } from '../../permissions/entities/permission.entity';
 
 @Entity('roles')
@@ -16,8 +16,8 @@ export class Role {
   @Column({ type: 'boolean', default: true, name: 'is_active' })
   isActive!: boolean;
 
-  @OneToMany(() => User, (user) => user.role)
-  users!: User[];
+  @OneToMany(() => UserOrmEntity, (user) => user.role)
+  users!: UserOrmEntity[];
 
   @ManyToMany(() => Permission, (permission) => permission.roles)
   @JoinTable({
