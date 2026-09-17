@@ -3,15 +3,15 @@ import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { PERMISSIONS_KEY } from '../shared/infrastructure/decorators/require-permissions.decorator';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { PERMISSION_REPOSITORY_TOKEN } from '../permissions/interfaces/permission-repository.interface';
-import type { IPermissionRepository } from '../permissions/interfaces/permission-repository.interface';
+import { PERMISSION_REPOSITORY_PORT } from '../permissions/domain/ports/out/permission-repository.port';
+import type { PermissionRepositoryPort } from '../permissions/domain/ports/out/permission-repository.port';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    @Inject(PERMISSION_REPOSITORY_TOKEN) private readonly permissionRepository: IPermissionRepository,
+    @Inject(PERMISSION_REPOSITORY_PORT) private readonly permissionRepository: PermissionRepositoryPort,
   ) {}
 
 

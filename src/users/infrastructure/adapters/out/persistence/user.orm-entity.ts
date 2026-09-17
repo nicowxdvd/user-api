@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { Role } from '../../../../../roles/entities/role.entity';
+import { RoleOrmEntity } from '../../../../../roles/infrastructure/adapters/out/persistence/role.orm-entity';
 
 @Entity('users')
 @Index(['createdAt', 'id'])
@@ -31,7 +31,7 @@ export class UserOrmEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date | undefined;
 
-  @ManyToOne(() => Role, (role) => role.users)
+  @ManyToOne(() => RoleOrmEntity, (role) => role.users)
   @JoinColumn({ name: 'role_id' })
-  role: Role | undefined;
+  role: RoleOrmEntity | undefined;
 }
