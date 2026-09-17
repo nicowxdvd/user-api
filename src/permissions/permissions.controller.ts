@@ -4,8 +4,8 @@ import { PermissionsService } from './permissions.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
-import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
-import { QueryFailedFilter } from '../common/filters/query-failed.filter';
+import { RequirePermissions } from '../shared/infrastructure/decorators/require-permissions.decorator';
+import { QueryFailedFilter } from '../shared/infrastructure/filters/query-failed.filter';
 
 @ApiTags('permissions')
 @ApiBearerAuth()

@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { QueryFailedFilter } from './common/filters/query-failed.filter';
+import { QueryFailedFilter } from './shared/infrastructure/filters/query-failed.filter';
+import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -14,6 +13,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    HealthModule,
     UsersModule,
     AuthModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 5 }]),
@@ -21,30 +21,22 @@ import { ThrottlerModule } from '@nestjs/throttler';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        console.log('📌 USUARIO DETECTADO:', configService.get<string>('DB_USERNAME'));
-        console.log('📌 BASE DE DATOS:', configService.get<string>('DB_DATABASE'));
-
-        return {
-          type: 'mysql',
-          host: configService.get<string>('DB_HOST', 'localhost'),
-          port: configService.get<number>('DB_PORT', 3306),
-          username: configService.get<string>('DB_USERNAME', 'root'), // Si falla, usa 'root' por defecto
-          password: configService.get<string>('DB_PASSWORD', ''),
-          database: configService.get<string>('DB_DATABASE'),
-          autoLoadEntities: true,
-          synchronize: true,
-        };
-
-      },
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get<string>('DB_HOST', 'localhost'),
+        port: configService.get<number>('DB_PORT', 3306),
+        username: configService.get<string>('DB_USERNAME', 'root'), // Si falla, usa 'root' por defecto
+        password: configService.get<string>('DB_PASSWORD', ''),
+        database: configService.get<string>('DB_DATABASE'),
+        autoLoadEntities: true,
+        synchronize: true,
+      }),
     }),
     RolesModule,
     UserProfilesModule,
     PermissionsModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     // Red de seguridad con mensajes genéricos: ningún error del driver escapa
     // como 500 sin traducir. Se usa `useValue` y no `useClass` porque el
     // constructor recibe un objeto de mensajes que Nest no sabe inyectar.
