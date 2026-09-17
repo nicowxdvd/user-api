@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { PERMISSIONS_KEY } from '../common/decorators/require-permissions.decorator';
+import { PERMISSIONS_KEY } from '../shared/infrastructure/decorators/require-permissions.decorator';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { PERMISSION_REPOSITORY_TOKEN } from '../permissions/interfaces/permission-repository.interface';
 import type { IPermissionRepository } from '../permissions/interfaces/permission-repository.interface';

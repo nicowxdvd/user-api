@@ -4,7 +4,7 @@ import { UserProfilesService } from './user-profiles.service';
 import { CreateUserProfileDto } from './dto/create-user-profile.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { AuthGuard } from '../auth/auth.guard';
-import { QueryFailedFilter } from '../common/filters/query-failed.filter';
+import { QueryFailedFilter } from '../shared/infrastructure/filters/query-failed.filter';
 
 @ApiTags('user-profiles')
 @ApiBearerAuth()

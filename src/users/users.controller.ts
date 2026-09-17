@@ -5,11 +5,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
-import { Public } from '../common/decorators/public.decorator';
-import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
+import { Public } from '../shared/infrastructure/decorators/public.decorator';
+import { RequirePermissions } from '../shared/infrastructure/decorators/require-permissions.decorator';
 import type { Request } from 'express';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
-import { QueryFailedFilter } from '../common/filters/query-failed.filter';
+import { QueryFailedFilter } from '../shared/infrastructure/filters/query-failed.filter';
 
 @ApiTags('users')
 @ApiBearerAuth()
